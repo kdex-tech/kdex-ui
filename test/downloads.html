@@ -6,7 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KDex UI Components Test Page</title>
   <link rel="stylesheet" href="/test/main.css" type="text/css">
-  <meta name="path-separator" content="/_/">
+  <meta name="kdex-ui"
+    data-path-separator="/_/"
+    data-login-path="/~/o/login"
+    data-login-label="Login"
+    data-login-css-query="nav.nav .nav-dropdown a.login"
+    data-logout-path="/~/o/logout"
+    data-logout-label="Logout"
+    data-logout-css-query="nav.nav .nav-dropdown a.logout"
+  >
 </head>
 
 <body>
@@ -24,6 +32,9 @@
         <a href="/downloads/_/one/foo">Foo</a>
         <a href="/downloads/_/two/bar">Bar</a>
       </div>
+    </div>
+    <div class="nav-dropdown">
+      <a class="nav-button login" href="/login">Login</a>
     </div>
   </nav>
 

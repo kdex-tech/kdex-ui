@@ -1,4 +1,65 @@
-import {createBrowserHistory, History} from "history";
+import {createBrowserHistory, History} from 'history';
+
+class AppMeta {
+  public readonly pathSeparator: string;
+  public readonly loginPath: string;
+  public readonly logoutPath: string;
+  public readonly loginLabel: string;
+  public readonly logoutLabel: string;
+  public readonly loginCssQuery: string;
+  public readonly logoutCssQuery: string;
+
+  constructor() {
+    const kdexUIMeta = document.querySelector('html head meta[name="kdex-ui"]');
+
+    if (!kdexUIMeta) {
+      throw new Error('kdex-ui meta tag not found');
+    }
+
+    this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/_/';
+    this.loginPath = kdexUIMeta.getAttribute('data-login-path') || '/~/o/login';
+    this.logoutPath = kdexUIMeta.getAttribute('data-logout-path') || '/~/o/logout';
+    this.loginLabel = kdexUIMeta.getAttribute('data-login-label') || 'Login';
+    this.logoutLabel = kdexUIMeta.getAttribute('data-logout-label') || 'Logout';
+    this.loginCssQuery = kdexUIMeta.getAttribute('data-login-css-query') || 'nav.nav .nav-dropdown a.login';
+    this.logoutCssQuery = kdexUIMeta.getAttribute('data-logout-css-query') || 'nav.nav .nav-dropdown a.logout';
+
+    document.addEventListener("DOMContentLoaded", this._setLoginLogoutLinks.bind(this));
+  }
+
+  _setLoginLogoutLinks(): void {
+    const loginLink = document.querySelector(this.loginCssQuery);
+    const logoutLink = document.querySelector(this.logoutCssQuery);
+
+    if (loginLink) {
+      loginLink.textContent = this.loginLabel;
+      if (loginLink instanceof HTMLAnchorElement) {
+        loginLink.href = this.loginPath;
+      }
+      else {
+        loginLink.addEventListener('click', () => {
+          const url = new URL(window.location.href);
+          url.pathname = this.loginPath;
+          window.location.href = url.toString();
+        });
+      }
+    }
+
+    if (logoutLink) {
+      logoutLink.textContent = this.logoutLabel;
+      if (logoutLink instanceof HTMLAnchorElement) {
+        logoutLink.href = this.logoutPath;
+      }
+      else {
+        logoutLink.addEventListener('click', () => {
+          const url = new URL(window.location.href);
+          url.pathname = this.logoutPath;
+          window.location.href = url.toString();
+        });
+      }
+    }
+  }
+}
 
 class AppRouteItem {
   constructor(
@@ -21,31 +82,29 @@ class AppRouteItem {
 class AppRouteRegistry {
   private items: AppRouteItem[] = [];
   private callbacks: ((items: AppRouteItem[]) => void)[] = [];
-  public readonly pathSeparator: string;
   private history: History;
 
   constructor() {
-    const pathSeparator = document.querySelector('html head meta[name="path-separator"]');
-    this.pathSeparator = pathSeparator?.getAttribute('content') || '/_/';
     this.history = createBrowserHistory();
+
     this.history.listen(() => {
-      this._doNavigation();
+      this._navigateToAppRoutePath();
     });
 
     document.addEventListener("DOMContentLoaded", this._resetNavigationLinks.bind(this));
-    document.addEventListener("DOMContentLoaded", this._doNavigation.bind(this));
+    document.addEventListener("DOMContentLoaded", this._navigateToAppRoutePath.bind(this));
   }
 
-  _doNavigation(): void {
+  _navigateToAppRoutePath(): void {
     const currentRoute = this.currentRoutepath();
-    const hosts = new Set(this.getItems().map(item => item.host).filter(host => host !== undefined));
+    const apps = new Set(this.getItems().map(item => item.host).filter(host => host !== undefined));
 
-    for (const host of hosts) {
-      if (currentRoute && host.id === currentRoute.id) {
-        host.setAttribute('route-path', `/${currentRoute.path}`);
+    for (const app of apps) {
+      if (currentRoute && app.id === currentRoute.id) {
+        app.setAttribute('route-path', `/${currentRoute.path}`);
       }
       else {
-        host.setAttribute('route-path', '');
+        app.setAttribute('route-path', '');
       }
     }
   }
@@ -69,8 +128,8 @@ class AppRouteRegistry {
   }
 
   basepath(): string {
-    if (window.location.pathname.includes(this.pathSeparator)) {
-      return window.location.pathname.split(this.pathSeparator, 2)[0];
+    if (window.location.pathname.includes(appMeta.pathSeparator)) {
+      return window.location.pathname.split(appMeta.pathSeparator, 2)[0];
     }
     if (window.location.pathname.endsWith('/')) {
       return window.location.pathname.slice(0, -1);
@@ -79,8 +138,8 @@ class AppRouteRegistry {
   }
 
   currentRoutepath(): AppRouteItem | null {
-    if (window.location.pathname.includes(this.pathSeparator)) {
-      const routePath = window.location.pathname.split(this.pathSeparator, 2)[1];
+    if (window.location.pathname.includes(appMeta.pathSeparator)) {
+      const routePath = window.location.pathname.split(appMeta.pathSeparator, 2)[1];
 
       const [id, path] = routePath.split('/', 2);
       return new AppRouteItem({
@@ -124,6 +183,13 @@ class AppRouteRegistry {
   }
 }
 
+const appMeta = new AppMeta();
 const appRouteRegistry = new AppRouteRegistry();
 
-export { AppRouteItem, AppRouteRegistry, appRouteRegistry };
+export {
+  AppMeta,
+  AppRouteItem,
+  AppRouteRegistry,
+  appMeta,
+  appRouteRegistry,
+};

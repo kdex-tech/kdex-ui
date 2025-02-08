@@ -42,7 +42,17 @@ export default defineConfig({
         target: 'http://localhost:5173',
         rewrite: () => '/test/downloads.html',
         changeOrigin: true
-      }
+      },
+      '^/~/o/login.*': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/login.html',
+        changeOrigin: true
+      },
+      '^/~/o/logout.*': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/logout.html',
+        changeOrigin: true
+      },
     },
     watch: {
       usePolling: true,
