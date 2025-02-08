@@ -1,40 +1,44 @@
 class AppRouteItem {
-  constructor({
-    basepath,
-    id,
-    path
-  }) {
-    this.basepath = basepath;
-    this.id = id;
-    this.path = path;
+  constructor(
+    private config: {
+      basepath: string;
+      id: string;
+      path: string;
+    }
+  ) {
+    this.basepath = config.basepath;
+    this.id = config.id;
+    this.path = config.path;
   }
+
+  basepath: string;
+  id: string;
+  path: string;
 }
 
 class AppRouteRegistry {
-  constructor() {
-    this.items = [];
-    this.callbacks = [];
-  }
+  private items: AppRouteItem[] = [];
+  private callbacks: ((items: AppRouteItem[]) => void)[] = [];
 
-  addItem(item) {
+  addItem(item: AppRouteItem): void {
     if (item instanceof AppRouteItem) {
       this.items.push(item);
       this.callbacks.forEach(callback => callback(this.items));
     }
   }
 
-  removeItem(item) {
+  removeItem(item: AppRouteItem): void {
     if (item instanceof AppRouteItem) {
       this.items = this.items.filter(i => i !== item);
       this.callbacks.forEach(callback => callback(this.items));
     }
   }
 
-  onItemAdded(callback) {
+  onItemAdded(callback: (items: AppRouteItem[]) => void): void {
     this.callbacks.push(callback);
   }
 
-  getItems() {
+  getItems(): AppRouteItem[] {
     return this.items;
   }
 }
@@ -54,15 +58,15 @@ class AppContainerElement extends HTMLElement {
     shadowRoot.appendChild(appContainerTemplate.content.cloneNode(true));
   }
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ['path-separator'];
   }
 
-  static elementName() {
+  static elementName(): string {
     return 'kdex-ui-app-container';
   }
 
-  basepath() {
+  basepath(): string {
     if (window.location.pathname.includes(this.pathSeparator)) {
       return window.location.pathname.split(this.pathSeparator, 2)[0];
     }
@@ -72,18 +76,18 @@ class AppContainerElement extends HTMLElement {
     return window.location.pathname;
   }
 
-  get pathSeparator() {
+  get pathSeparator(): string {
     return this.getAttribute('path-separator') || '/_/';
   }
 
-  routepath() {
+  routepath(): string {
     if (window.location.pathname.includes(this.pathSeparator)) {
       return window.location.pathname.split(this.pathSeparator, 2)[1];
     }
     return '';
   }
 
-  set pathSeparator(value) {
+  set pathSeparator(value: string | null) {
     if (value) {
       this.setAttribute('path-separator', value);
     } else {
@@ -93,47 +97,65 @@ class AppContainerElement extends HTMLElement {
 }
 
 class AppElement extends HTMLElement {
-  #id;
+  #id: string | null;
 
   constructor() {
     super();
 
-    if (!(this.parentElement instanceof AppContainerElement)) {
+    const parent = this.parentElement;
+    if (!(parent instanceof AppContainerElement)) {
       throw new Error(`Parent of AppElement must be of type AppContainerElement`);
     }
 
     this.#id = this.getAttribute('id') || null;
   }
 
-  static get observedAttributes() {
+  static get observedAttributes(): string[] {
     return ['id', 'route-path'];
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (name === 'route-path') {
       this.routePath = newValue;
     }
     this.connectedCallback();
   }
 
-  basepath() {
-    return this.parentElement.basepath();
+  basepath(): string {
+    return this.getParentContainer().basepath();
   }
 
-  id() {
-    return this.#id;
+  getId(): string {
+    return this.#id || '';
   }
 
-  parentContainer() {
-    return this.parentElement;
+  getParentContainer(): AppContainerElement {
+    const parent = this.parentElement;
+    if (!(parent instanceof AppContainerElement)) {
+      throw new Error('Parent container not found');
+    }
+    return parent;
   }
 
-  registerRoute(item) {
-    if (item instanceof AppRouteItem && this.id()) {
-      item.id = this.id();
+  registerRoute(item: AppRouteItem): void {
+    if (item instanceof AppRouteItem && this.getId()) {
+      item.id = this.getId();
       item.basepath = this.basepath();
       appRouteRegistry.addItem(item);
     }
+  }
+
+  // Add this property to satisfy the attributeChangedCallback
+  routePath: string | null = null;
+
+  connectedCallback(): void {
+    // Default implementation - can be overridden by subclasses
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'kdex-ui-app-container': AppContainerElement;
   }
 }
 
@@ -146,4 +168,4 @@ export {
   AppElement,
   AppRouteItem,
   AppRouteRegistry,
-};
+}; 

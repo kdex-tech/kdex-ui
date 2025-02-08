@@ -1,6 +1,8 @@
-import { AppRouteItem, AppElement } from '/src/index.js';
+import { AppRouteItem, AppElement } from '@kdex/ui';
 
 export class KDexExample extends AppElement {
+  declare shadowRoot: ShadowRoot;
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -29,7 +31,7 @@ export class KDexExample extends AppElement {
         <pre>
 basepath: ${this.basepath()}
 routepath: ${this.routePath}
-id: ${this.id()}
+id: ${this.getId()}
         </pre>
         ${body}
       </div>

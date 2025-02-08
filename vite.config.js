@@ -4,7 +4,7 @@ import createExternal from 'vite-plugin-external';
 export default defineConfig({
   build: {
     lib: {
-      entry: 'src/index.js',
+      entry: 'src/index.ts',
       formats: ['es'],
       fileName: 'index'
     },
