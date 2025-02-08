@@ -1,28 +1,43 @@
-import { AppElement } from '@kdex/ui';
+import { AppNavigationItem, AppElement } from '/src/index.js';
 
 export class KDexExample extends AppElement {
-    constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.registerNavigationItem(new AppNavigationItem({
+      basepath: this.basepath(),
+      id: 'kdex-example',
+      label: 'KDex Example',
+      path: '/kdex-example',
+    }));
+  }
+
+  connectedCallback() {
+    var body = `<p>This is a test component to verify the module loading works.</p>`;
+    if (this.routePath === 'kdex-example') {
+      body = `<h1>I've been routed to.</h1>`;
     }
 
-    connectedCallback() {
-        this.shadowRoot.innerHTML = `
-            <style>
-                :host {
-                    display: block;
-                    padding: 1rem;
-                    background: #f5f5f5;
-                    border-radius: 4px;
-                }
-            </style>
-            <div>
-                <h3>KDex Example Component</h3>
-                <code>${this.basepath}</code>
-                <p>This is a test component to verify the module loading works.</p>
-            </div>
-        `;
-    }
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          padding: 1rem;
+          background: #f5f5f5;
+          border-radius: 4px;
+        }
+      </style>
+      <div>
+        <h3>KDex Example Component</h3>
+        <pre>
+basepath: ${this.basepath()}
+routepath: ${this.routePath}
+id: ${this.id()}
+        </pre>
+        ${body}
+      </div>
+    `;
+  }
 }
 
 // Register the component
