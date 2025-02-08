@@ -27,25 +27,37 @@ class AppRouteRegistry {
     const pathSeparator = document.querySelector('html head meta[name="path-separator"]');
     this.pathSeparator = pathSeparator?.getAttribute('content') || '/_/';
 
-    history.listen(({ action, location }) => {
-      this._onDocumentReady(new Event('DOMContentLoaded'));
+    history.listen(() => {
+      this._doNavigation();
     });
 
-    document.addEventListener("DOMContentLoaded", this._onDocumentReady.bind(this));
+    document.addEventListener("DOMContentLoaded", this._resetNavigationLinks.bind(this));
+    document.addEventListener("DOMContentLoaded", this._doNavigation.bind(this));
   }
 
-  _onDocumentReady(event: Event): void {
-    {
-      const currentRoute = this.currentRoutepath();
-      const hosts = new Set(this.getItems().map(item => item.host).filter(host => host !== undefined));
+  _doNavigation(): void {
+    const currentRoute = this.currentRoutepath();
+    const hosts = new Set(this.getItems().map(item => item.host).filter(host => host !== undefined));
 
-      for (const host of hosts) {
-        if (currentRoute && host.id === currentRoute.id) {
-          host.setAttribute('route-path', `/${currentRoute.path}`);
-        }
-        else {
-          host.setAttribute('route-path', '');
-        }
+    for (const host of hosts) {
+      if (currentRoute && host.id === currentRoute.id) {
+        host.setAttribute('route-path', `/${currentRoute.path}`);
+      }
+      else {
+        host.setAttribute('route-path', '');
+      }
+    }
+  }
+
+  _resetNavigationLinks(): void {
+    for (let link of document.querySelectorAll('a')) {
+      if (link.href.startsWith(document.location.origin + this.basepath())) {
+        const url = new URL(link.href);
+        link.onclick = () => {
+          history.push(url.pathname);
+          return false;
+        };
+        link.href = 'javascript:void(0)';
       }
     }
   }

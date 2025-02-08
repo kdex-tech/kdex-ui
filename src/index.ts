@@ -56,9 +56,10 @@ class AppElement extends HTMLElement {
   }
 
   navigate(path: string): void {
-    const location = `${this.basepath()}${appRouteRegistry.pathSeparator}${this.id}${path}`;
-    console.log(`Navigating to ${location}`);
-    history.push(location);
+    if (!path.startsWith('/')) {
+      path = `/${path}`;
+    }
+    history.push(`${this.basepath()}${appRouteRegistry.pathSeparator}${this.id}${path}`);
   }
 
   registerRoutes(...paths: string[]): void {
