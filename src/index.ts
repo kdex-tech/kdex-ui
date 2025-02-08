@@ -1,4 +1,4 @@
-import { AppRouteItem, AppRouteRegistry, appRouteRegistry } from './app-route';
+import { AppRouteItem, AppRouteRegistry, appMeta, appRouteRegistry } from './app-route';
 
 class AppContainerElement extends HTMLElement {
   private appContainerTemplate: HTMLTemplateElement;
@@ -57,7 +57,7 @@ class AppElement extends HTMLElement {
     if (!path.startsWith('/')) {
       path = `/${path}`;
     }
-    appRouteRegistry.navigate(`${this.basepath()}${appRouteRegistry.pathSeparator}${this.id}${path}`);
+    appRouteRegistry.navigate(`${this.basepath()}${appMeta.pathSeparator}${this.id}${path}`);
   }
 
   registerRoutes(...paths: string[]): void {

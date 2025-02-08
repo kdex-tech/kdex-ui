@@ -8,6 +8,7 @@ class AppMeta {
   public readonly logoutLabel: string;
   public readonly loginCssQuery: string;
   public readonly logoutCssQuery: string;
+  public readonly loggedIn: boolean;
 
   constructor() {
     const kdexUIMeta = document.querySelector('html head meta[name="kdex-ui"]');
@@ -23,39 +24,44 @@ class AppMeta {
     this.logoutLabel = kdexUIMeta.getAttribute('data-logout-label') || 'Logout';
     this.loginCssQuery = kdexUIMeta.getAttribute('data-login-css-query') || 'nav.nav .nav-dropdown a.login';
     this.logoutCssQuery = kdexUIMeta.getAttribute('data-logout-css-query') || 'nav.nav .nav-dropdown a.logout';
+    this.loggedIn = kdexUIMeta.getAttribute('data-logged-in') !== 'false';
 
     document.addEventListener("DOMContentLoaded", this._setLoginLogoutLinks.bind(this));
   }
 
   _setLoginLogoutLinks(): void {
-    const loginLink = document.querySelector(this.loginCssQuery);
-    const logoutLink = document.querySelector(this.logoutCssQuery);
+    if (this.loggedIn) {
+      const logoutLink = document.querySelector(this.logoutCssQuery);
 
-    if (loginLink) {
-      loginLink.textContent = this.loginLabel;
-      if (loginLink instanceof HTMLAnchorElement) {
-        loginLink.href = this.loginPath;
-      }
-      else {
-        loginLink.addEventListener('click', () => {
-          const url = new URL(window.location.href);
-          url.pathname = this.loginPath;
-          window.location.href = url.toString();
-        });
+      if (logoutLink) {
+        logoutLink.textContent = this.logoutLabel;
+        if (logoutLink instanceof HTMLAnchorElement) {
+          logoutLink.href = this.logoutPath;
+        }
+        else {
+          logoutLink.addEventListener('click', () => {
+            const url = new URL(window.location.href);
+            url.pathname = this.logoutPath;
+            window.location.href = url.toString();
+          });
+        }
       }
     }
+    else {
+      const loginLink = document.querySelector(this.loginCssQuery);
 
-    if (logoutLink) {
-      logoutLink.textContent = this.logoutLabel;
-      if (logoutLink instanceof HTMLAnchorElement) {
-        logoutLink.href = this.logoutPath;
-      }
-      else {
-        logoutLink.addEventListener('click', () => {
-          const url = new URL(window.location.href);
-          url.pathname = this.logoutPath;
-          window.location.href = url.toString();
-        });
+      if (loginLink) {
+        loginLink.textContent = this.loginLabel;
+        if (loginLink instanceof HTMLAnchorElement) {
+          loginLink.href = this.loginPath;
+        }
+        else {
+          loginLink.addEventListener('click', () => {
+            const url = new URL(window.location.href);
+            url.pathname = this.loginPath;
+            window.location.href = url.toString();
+          });
+        }
       }
     }
   }
