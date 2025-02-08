@@ -15,6 +15,14 @@ export default defineConfig({
     }
   },
   server: {
-    open: '/test/index.html' // Automatically open the test page when running npm run dev
-  }
+    open: 'app/_/foo',
+    proxy: {
+      // Handle all paths under /app/* and redirect to index.html
+      '^/app/.*': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/index.html',
+        changeOrigin: true
+      }
+    }
+  },
 });
