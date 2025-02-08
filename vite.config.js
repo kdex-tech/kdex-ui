@@ -9,7 +9,9 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es'],
-      fileName: 'index'
+      fileName(format, entryName) {
+        return entryName + (format === 'es' ? '.mjs' : '.js');
+      }
     },
     sourcemap: true,
     rollupOptions: {
