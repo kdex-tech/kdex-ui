@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import createExternal from 'vite-plugin-external';
+import vitePluginExternal from 'vite-plugin-external';
 import dts from 'vite-plugin-dts';
+import pkg from './package.json';
 
 export default defineConfig({
   build: {
@@ -12,17 +13,14 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: [], // Add external dependencies here if any
       output: {
         format: 'es'
       }
     }
   },
   plugins: [
-    createExternal({
-      externals: {
-        history: 'history'
-      }
+    vitePluginExternal({
+      externalizeDeps: Object.keys(pkg.dependencies)
     }),
     dts({
       insertTypesEntry: true,
