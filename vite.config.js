@@ -54,7 +54,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@kdex/ui': resolve(__dirname, 'src/index.ts')
+      '@': resolve(__dirname, 'src')
     }
   },
   root: '.',
