@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import createExternal from 'vite-plugin-external';
 
 export default defineConfig({
   build: {
@@ -14,13 +15,25 @@ export default defineConfig({
       }
     }
   },
+  plugins: [
+    createExternal({
+      externals: {
+        history: 'history'
+      }
+    })
+  ],
   server: {
-    open: 'app/_/foo',
+    open: 'app',
     proxy: {
       // Handle all paths under /app/* and redirect to index.html
-      '^/app/.*': {
+      '^/app.*': {
         target: 'http://localhost:5173',
         rewrite: () => '/test/index.html',
+        changeOrigin: true
+      },
+      '^/downloads.*': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/downloads.html',
         changeOrigin: true
       }
     }

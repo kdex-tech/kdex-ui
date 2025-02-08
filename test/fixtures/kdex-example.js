@@ -1,14 +1,11 @@
-import { AppNavigationItem, AppElement } from '/src/index.js';
+import { AppRouteItem, AppElement } from '/src/index.js';
 
 export class KDexExample extends AppElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.registerNavigationItem(new AppNavigationItem({
-      basepath: this.basepath(),
-      id: 'kdex-example',
-      label: 'KDex Example',
-      path: '/kdex-example',
+    this.registerRoute(new AppRouteItem({
+      path: '/foo',
     }));
   }
 
