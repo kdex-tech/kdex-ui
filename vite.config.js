@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import createExternal from 'vite-plugin-external';
+import dts from 'vite-plugin-dts';
 
 export default defineConfig({
   build: {
@@ -22,7 +23,11 @@ export default defineConfig({
       externals: {
         history: 'history'
       }
-    })
+    }),
+    dts({
+      insertTypesEntry: true,
+      include: ['src/**/*.ts'],
+    }),
   ],
   server: {
     open: 'app',
