@@ -1,8 +1,6 @@
 import { AppElement } from '@kdex/ui';
 
 export class KDexExample extends AppElement {
-  declare shadowRoot: ShadowRoot;
-
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
