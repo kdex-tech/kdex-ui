@@ -1,4 +1,4 @@
-import history from "history/browser";
+import {createBrowserHistory, History} from "history";
 
 class AppRouteItem {
   constructor(
@@ -22,12 +22,13 @@ class AppRouteRegistry {
   private items: AppRouteItem[] = [];
   private callbacks: ((items: AppRouteItem[]) => void)[] = [];
   public readonly pathSeparator: string;
+  private history: History;
 
   constructor() {
     const pathSeparator = document.querySelector('html head meta[name="path-separator"]');
     this.pathSeparator = pathSeparator?.getAttribute('content') || '/_/';
-
-    history.listen(() => {
+    this.history = createBrowserHistory();
+    this.history.listen(() => {
       this._doNavigation();
     });
 
@@ -54,7 +55,7 @@ class AppRouteRegistry {
       if (link.href.startsWith(document.location.origin + this.basepath())) {
         const url = new URL(link.href);
         link.onclick = () => {
-          history.push(url.pathname);
+          this.history.push(url.pathname);
           return false;
         };
         link.href = 'javascript:void(0)';
@@ -99,6 +100,10 @@ class AppRouteRegistry {
     return this.items;
   }
 
+  navigate(location: string): void {
+    this.history.push(location);
+  }
+
   onItemAdded(callback: (items: AppRouteItem[]) => void): void {
     this.callbacks.push(callback);
   }
@@ -119,4 +124,6 @@ class AppRouteRegistry {
   }
 }
 
-export { AppRouteItem, AppRouteRegistry, history };
+const appRouteRegistry = new AppRouteRegistry();
+
+export { AppRouteItem, AppRouteRegistry, appRouteRegistry };
