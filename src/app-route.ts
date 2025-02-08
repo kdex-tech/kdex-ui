@@ -117,7 +117,7 @@ class AppRouteRegistry {
 
   _resetNavigationLinks(): void {
     for (let link of document.querySelectorAll('a')) {
-      if (link.href.startsWith(document.location.origin + this.basepath())) {
+      if (link.href.startsWith(document.location.origin + this.basepath() + appMeta.pathSeparator)) {
         const url = new URL(link.href);
         link.onclick = () => {
           this.history.push(url.pathname);
