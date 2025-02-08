@@ -1,4 +1,4 @@
-import { AppRouteItem, AppElement } from '@kdex/ui';
+import { AppElement } from '@kdex/ui';
 
 export class KDexExample extends AppElement {
   declare shadowRoot: ShadowRoot;
@@ -6,15 +6,18 @@ export class KDexExample extends AppElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.registerRoute(new AppRouteItem({
-      path: '/foo',
-    }));
+    this.registerRoutes('/foo', '/bar');
   }
 
   connectedCallback() {
     var body = `<p>This is a test component to verify the module loading works.</p>`;
-    if (this.routePath === 'kdex-example') {
-      body = `<h1>I've been routed to.</h1>`;
+
+    if (this.routePath === '/foo') {
+      body = `<h1>I've been routed to as /foo</h1>`;
+    }
+
+    if (this.routePath === '/bar') {
+      body = `<h1>I've been routed to as /bar</h1>`;
     }
 
     this.shadowRoot.innerHTML = `
@@ -31,11 +34,21 @@ export class KDexExample extends AppElement {
         <pre>
 basepath: ${this.basepath()}
 routepath: ${this.routePath}
-id: ${this.getId()}
+id: ${this.id}
         </pre>
         ${body}
+        <button class="navigate-button-one">Navigate to /foo</button>
+        <button class="navigate-button-two">Navigate to /bar</button>
       </div>
     `;
+
+    this.shadowRoot.querySelector('.navigate-button-one')?.addEventListener('click', () => {
+      this.navigate('/foo');
+    });
+
+    this.shadowRoot.querySelector('.navigate-button-two')?.addEventListener('click', () => {
+      this.navigate('/bar');
+    });
   }
 }
 

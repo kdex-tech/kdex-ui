@@ -1,17 +1,19 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 import createExternal from 'vite-plugin-external';
 
 export default defineConfig({
   build: {
     lib: {
-      entry: 'src/index.ts',
+      entry: resolve(__dirname, 'src/index.ts'),
       formats: ['es'],
       fileName: 'index'
     },
+    sourcemap: true,
     rollupOptions: {
       external: [], // Add external dependencies here if any
       output: {
-        preserveModules: true
+        format: 'es'
       }
     }
   },
@@ -36,6 +38,19 @@ export default defineConfig({
         rewrite: () => '/test/downloads.html',
         changeOrigin: true
       }
+    },
+    watch: {
+      usePolling: true,
+      ignored: ['!**/node_modules/**']
+    },
+    hmr: {
+      overlay: true
     }
   },
+  resolve: {
+    alias: {
+      '@kdex/ui': resolve(__dirname, 'src/index.ts')
+    }
+  },
+  root: '.',
 });
