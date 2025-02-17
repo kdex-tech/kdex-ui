@@ -14,6 +14,7 @@ export default defineConfig({
       }
     },
     sourcemap: true,
+    target: 'es2022',
     rollupOptions: {
       output: {
         format: 'es'
