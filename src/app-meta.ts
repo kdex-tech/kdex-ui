@@ -53,16 +53,16 @@ class AppMeta {
     this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/~/state';
 
     document.addEventListener("DOMContentLoaded", () => {
-      fetch(this.stateEndpoint).then(r => r.json()).then(us => {
-        userStateSync.setUserState(us as UserState);
-        this._setLoginLogoutLinks(us as UserState);
+      fetch(this.stateEndpoint).then(r => r.json()).then((us: UserState) => {
+        userStateSync.setUserState(us);
+        this._setLoginLogoutLinks(us);
       });
     });
   }
 
   _setLoginLogoutLinks(us: UserState): void {
     // a.k.a. if user is logged in
-    if (us.Principal) {
+    if (us.principal) {
       const logoutLink = document.querySelector(this.logoutCssQuery);
 
       if (logoutLink) {
@@ -100,9 +100,9 @@ class AppMeta {
 }
 
 type UserState = {
-  Principal: string;
-  Roles: string[];
-  Data: Record<string, any>;
+  data: Record<string, any>;
+  principal: string;
+  roles: string[];
 };
 
 const appMeta = new AppMeta();
