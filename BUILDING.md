@@ -5,5 +5,4 @@
     npm version [<newversion> | major | minor | patch | premajor | preminor | prepatch | prerelease | from-git]
     git push origin --tags
     ```
-- run `npm run build`
-- run `npm run deploy`
+- run `npm pack`
