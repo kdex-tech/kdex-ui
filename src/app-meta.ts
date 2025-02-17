@@ -28,7 +28,8 @@ class AppMeta {
   }
 
   _setLoginLogoutLinks(): void {
-    if (this.stateEndpoint) {
+    // a.k.a. if user is logged in
+    if (userState.Principal) {
       const logoutLink = document.querySelector(this.logoutCssQuery);
 
       if (logoutLink) {
@@ -65,9 +66,19 @@ class AppMeta {
   }
 }
 
+type UserState = {
+  Principal: string;
+  Roles: string[];
+  Data: Record<string, any>;
+};
+
 const appMeta = new AppMeta();
+
+const userState = await fetch(appMeta.stateEndpoint).then(r => r.json()) as UserState;
 
 export {
   AppMeta,
   appMeta,
+  UserState,
+  userState,
 };
