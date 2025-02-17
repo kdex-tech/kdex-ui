@@ -37,22 +37,32 @@ export default defineConfig({
       '^/app.*': {
         target: 'http://localhost:5173',
         rewrite: () => '/test/index.html',
-        changeOrigin: true
+        changeOrigin: false
       },
       '^/downloads.*': {
         target: 'http://localhost:5173',
         rewrite: () => '/test/downloads.html',
-        changeOrigin: true
+        changeOrigin: false
       },
-      '^/~/o/login.*': {
+      '^/~/oauth/login.*': {
         target: 'http://localhost:5173',
-        rewrite: () => '/test/login.html',
-        changeOrigin: true
+        rewrite: () => '/test/loggedin.html',
+        changeOrigin: false
       },
-      '^/~/o/logout.*': {
+      '^/~/oauth/logout.*': {
         target: 'http://localhost:5173',
-        rewrite: () => '/test/logout.html',
-        changeOrigin: true
+        rewrite: () => '/test/loggedout.html',
+        changeOrigin: false
+      },
+      '^/~/state/in': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/loggedin.json',
+        changeOrigin: false
+      },
+      '^/~/state': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/loggedout.json',
+        changeOrigin: false
       },
     },
     watch: {

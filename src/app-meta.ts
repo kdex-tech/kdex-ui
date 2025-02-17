@@ -1,3 +1,31 @@
+class UserStateSync {
+  private userState: UserState | null = null;
+  private callbacks: ((userState: UserState) => void)[] = [];
+
+  public getUserState(): UserState | null {
+    return this.userState;
+  }
+
+  public onUserStateChange(callback: (userState: UserState) => void): void {
+    if (this.userState) {
+      callback(this.userState);
+    }
+
+    this.callbacks.push(callback);
+  }
+
+  public setUserState(userState: UserState): void {
+    this.userState = userState;
+    this.callbacks.forEach(callback => callback(userState));
+  }
+
+  public unregisterUserStateChange(callback: (userState: UserState) => void): void {
+    this.callbacks = this.callbacks.filter(c => c !== callback);
+  }
+}
+
+const userStateSync = new UserStateSync();
+
 class AppMeta {
   public readonly pathSeparator: string;
   public readonly loginPath: string;
@@ -24,12 +52,17 @@ class AppMeta {
     this.logoutCssQuery = kdexUIMeta.getAttribute('data-logout-css-query') || 'nav.nav .nav-dropdown a.logout';
     this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/~/state';
 
-    document.addEventListener("DOMContentLoaded", this._setLoginLogoutLinks.bind(this));
+    document.addEventListener("DOMContentLoaded", () => {
+      fetch(this.stateEndpoint).then(r => r.json()).then(us => {
+        userStateSync.setUserState(us as UserState);
+        this._setLoginLogoutLinks(us as UserState);
+      });
+    });
   }
 
-  _setLoginLogoutLinks(): void {
+  _setLoginLogoutLinks(us: UserState): void {
     // a.k.a. if user is logged in
-    if (userState.Principal) {
+    if (us.Principal) {
       const logoutLink = document.querySelector(this.logoutCssQuery);
 
       if (logoutLink) {
@@ -74,11 +107,9 @@ type UserState = {
 
 const appMeta = new AppMeta();
 
-const userState = await fetch(appMeta.stateEndpoint).then(r => r.json()) as UserState;
-
 export {
   AppMeta,
   appMeta,
   UserState,
-  userState,
+  userStateSync,
 };

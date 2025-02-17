@@ -1,0 +1,10 @@
+{
+  "Principal": "test",
+  "Roles": [
+    "test"
+  ],
+  "Data": {
+    "name": "test",
+    "email": "test@test.com"
+  }
+}
