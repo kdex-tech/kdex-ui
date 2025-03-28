@@ -27,13 +27,14 @@ class UserStateSync {
 const userStateSync = new UserStateSync();
 
 class AppMeta {
-  public readonly pathSeparator: string;
   public readonly loginPath: string;
-  public readonly logoutPath: string;
   public readonly loginLabel: string;
-  public readonly logoutLabel: string;
   public readonly loginCssQuery: string;
+  public readonly logoutPath: string;
+  public readonly logoutLabel: string;
   public readonly logoutCssQuery: string;
+  public readonly navigationEndpoint: string;
+  public readonly pathSeparator: string;
   public readonly stateEndpoint: string;
 
   constructor() {
@@ -43,20 +44,25 @@ class AppMeta {
       throw new Error('kdex-ui meta tag not found');
     }
 
-    this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/_/';
     this.loginPath = kdexUIMeta.getAttribute('data-login-path') || '/~/oauth/login';
-    this.logoutPath = kdexUIMeta.getAttribute('data-logout-path') || '/~/oauth/logout';
     this.loginLabel = kdexUIMeta.getAttribute('data-login-label') || 'Login';
-    this.logoutLabel = kdexUIMeta.getAttribute('data-logout-label') || 'Logout';
     this.loginCssQuery = kdexUIMeta.getAttribute('data-login-css-query') || 'nav.nav .nav-dropdown a.login';
+    this.logoutPath = kdexUIMeta.getAttribute('data-logout-path') || '/~/oauth/logout';
+    this.logoutLabel = kdexUIMeta.getAttribute('data-logout-label') || 'Logout';
     this.logoutCssQuery = kdexUIMeta.getAttribute('data-logout-css-query') || 'nav.nav .nav-dropdown a.logout';
+    this.navigationEndpoint = kdexUIMeta.getAttribute('data-navigation-endpoint') || '/~/navigation';
+    this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/_/';
     this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/~/state';
 
     document.addEventListener("DOMContentLoaded", () => {
-      fetch(this.stateEndpoint).then(r => r.json()).then((us: UserState) => {
-        userStateSync.setUserState(us);
-        this._setLoginLogoutLinks(us);
-      });
+      fetch(this.stateEndpoint).then(
+        r => r.json()
+      ).then(
+        (us: UserState) => {
+          userStateSync.setUserState(us);
+          this._setLoginLogoutLinks(us);
+        }
+      );
     });
   }
 
