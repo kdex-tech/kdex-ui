@@ -27,6 +27,8 @@ class UserStateSync {
 const userStateSync = new UserStateSync();
 
 class AppMeta {
+  public readonly checkBatchEndpoint: string;
+  public readonly checkSingleEndpoint: string;
   public readonly loginPath: string;
   public readonly loginLabel: string;
   public readonly loginCssQuery: string;
@@ -44,6 +46,8 @@ class AppMeta {
       throw new Error('kdex-ui meta tag not found');
     }
 
+    this.checkBatchEndpoint = kdexUIMeta.getAttribute('data-check-batch-endpoint') || '/~/check/batch';
+    this.checkSingleEndpoint = kdexUIMeta.getAttribute('data-check-single-endpoint') || '/~/check/single';
     this.loginPath = kdexUIMeta.getAttribute('data-login-path') || '/~/oauth/login';
     this.loginLabel = kdexUIMeta.getAttribute('data-login-label') || 'Login';
     this.loginCssQuery = kdexUIMeta.getAttribute('data-login-css-query') || 'nav.nav .nav-dropdown a.login';
@@ -64,6 +68,41 @@ class AppMeta {
         }
       );
     });
+  }
+
+  checkBatch(tuples: [
+    {
+      action: string;
+      resource: string;
+    }
+  ]): Promise<{
+    resource: string;
+    allowed: boolean;
+    error: string | null;
+  }[]> {
+    return fetch(
+      this.checkBatchEndpoint,
+      {
+        method: 'POST',
+        body: JSON.stringify(tuples),
+      }
+    ).then(r => r.json());
+  }
+
+  checkSingle(tuple: {
+    action: string;
+    resource: string;
+  }): Promise<{
+    allowed: boolean;
+    error: string | null;
+  }> {
+    return fetch(
+      this.checkSingleEndpoint,
+      {
+        method: 'POST',
+        body: JSON.stringify(tuple),
+      }
+    ).then(r => r.json());
   }
 
   _setLoginLogoutLinks(us: UserState): void {
