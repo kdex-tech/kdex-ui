@@ -6,17 +6,23 @@ class AppRouteItem {
     private config: {
       host?: HTMLElement;
       id: string;
+      label: string;
       path: string;
+      weight?: number;
     }
   ) {
     this.host = config.host;
     this.id = config.id;
+    this.label = config.label;
     this.path = config.path;
+    this.weight = config.weight;
   }
 
   host?: HTMLElement;
   id: string;
+  label: string;
   path: string;
+  weight?: number;
 }
 
 class AppRouteRegistry {
@@ -84,6 +90,7 @@ class AppRouteRegistry {
       const [id, path] = routePath.split('/', 2);
       return new AppRouteItem({
         id,
+        label: document.title,
         path,
       });
     }
@@ -107,12 +114,14 @@ class AppRouteRegistry {
     this.callbacks.push(callback);
   }
 
-  registerRoutes(host: HTMLElement, ...paths: string[]): void {
+  registerRoutes(host: HTMLElement, ...paths: {label: string, path: string, weight?: number}[]): void {
     for (const path of paths) {
       this.addItem(new AppRouteItem({
         host,
-        id: host.id,
-        path,
+        id: `${host.id}-${path.path}`,
+        label: path.label,
+        path: path.path,
+        weight: path.weight,
       }));
     }
   }

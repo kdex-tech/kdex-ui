@@ -40,7 +40,7 @@ class AppElement extends HTMLElement {
     appRouteRegistry.navigate(`${this.basepath()}${appMeta.pathSeparator}${this.id}${path}`);
   }
 
-  registerRoutes(...paths: string[]): void {
+  registerRoutes(...paths: {label: string, path: string, weight?: number}[]): void {
     if (this.id) {
       appRouteRegistry.registerRoutes(this, ...paths);
     }

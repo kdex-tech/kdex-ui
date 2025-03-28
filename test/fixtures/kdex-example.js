@@ -4,7 +4,7 @@ export class KDexExample extends AppElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.registerRoutes('/foo', '/bar');
+    this.registerRoutes({label: 'Foo', path: '/foo', weight: 1}, {label: 'Bar', path: '/bar', weight: 2});
   }
 
   connectedCallback() {
