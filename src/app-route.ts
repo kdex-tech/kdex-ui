@@ -1,4 +1,4 @@
-import {appMeta} from './app-meta';
+import {appMeta, userStateSync, UserState} from './app-meta';
 import {createBrowserHistory, History} from 'history';
 
 class AppRouteItem {
@@ -37,6 +37,8 @@ class AppRouteRegistry {
       this._navigateToAppRoutePath();
     });
 
+    userStateSync.onUserStateChange(this._registerLoginLogoutRoutes.bind(this));
+
     document.addEventListener("DOMContentLoaded", this._resetNavigationLinks.bind(this));
     document.addEventListener("DOMContentLoaded", this._navigateToAppRoutePath.bind(this));
   }
@@ -65,6 +67,25 @@ class AppRouteRegistry {
         };
         link.href = 'javascript:void(0)';
       }
+    }
+  }
+
+  _registerLoginLogoutRoutes(us: UserState): void {
+    if (us.principal) {
+      this.addItem(new AppRouteItem({
+        id: 'logout',
+        label: appMeta.logoutLabel,
+        path: appMeta.logoutPath,
+        weight: 1000000,
+      }));
+    }
+    else {
+      this.addItem(new AppRouteItem({
+        id: 'login',
+        label: appMeta.loginLabel,
+        path: appMeta.loginPath,
+        weight: 1000000,
+      }));
     }
   }
 
@@ -132,10 +153,43 @@ class AppRouteRegistry {
   }
 }
 
+type NavigationResult = {
+  hash: string;
+  items: NavigationItem[];
+}
+
+type NavigationItem = {
+  children: NavigationItem[];
+  id: string;
+  label: string;
+  path: string;
+  weight?: number;
+}
+
+function fetchNavigation(): Promise<NavigationResult> {
+  const items = appRouteRegistry.getItems();
+  return fetch(appMeta.navigationEndpoint, {
+    method: 'POST'
+  }).then(r => r.json()).then(r => {
+    // const item = r.items.find((i: NavigationItem) => i.id === items[0].id);
+    // if (item) {
+    // }
+    // TODO: Merge appRouteRegistry.getItems() with r.items
+
+    return {
+      hash: r.hash,
+      items: r.items,
+    };
+  });
+}
+
 const appRouteRegistry = new AppRouteRegistry();
 
 export {
   AppRouteItem,
   AppRouteRegistry,
   appRouteRegistry,
+  fetchNavigation,
+  NavigationItem,
+  NavigationResult,
 };

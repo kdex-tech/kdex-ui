@@ -64,7 +64,6 @@ class AppMeta {
       ).then(
         (us: UserState) => {
           userStateSync.setUserState(us);
-          this._setLoginLogoutLinks(us);
         }
       );
     });
@@ -103,44 +102,6 @@ class AppMeta {
         body: JSON.stringify(tuple),
       }
     ).then(r => r.json());
-  }
-
-  _setLoginLogoutLinks(us: UserState): void {
-    // a.k.a. if user is logged in
-    if (us.principal) {
-      const logoutLink = document.querySelector(this.logoutCssQuery);
-
-      if (logoutLink) {
-        logoutLink.textContent = this.logoutLabel;
-        if (logoutLink instanceof HTMLAnchorElement) {
-          logoutLink.href = this.logoutPath;
-        }
-        else {
-          logoutLink.addEventListener('click', () => {
-            const url = new URL(window.location.href);
-            url.pathname = this.logoutPath;
-            window.location.href = url.toString();
-          });
-        }
-      }
-    }
-    else {
-      const loginLink = document.querySelector(this.loginCssQuery);
-
-      if (loginLink) {
-        loginLink.textContent = this.loginLabel;
-        if (loginLink instanceof HTMLAnchorElement) {
-          loginLink.href = this.loginPath;
-        }
-        else {
-          loginLink.addEventListener('click', () => {
-            const url = new URL(window.location.href);
-            url.pathname = this.loginPath;
-            window.location.href = url.toString();
-          });
-        }
-      }
-    }
   }
 }
 

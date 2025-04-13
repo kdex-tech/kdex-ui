@@ -52,7 +52,6 @@ id: ${this.id}
 
 class NavExample extends HTMLElement {
   static instantiated = false;
-  refresh = 0;
 
   constructor() {
     if (NavExample.instantiated) {
@@ -62,20 +61,9 @@ class NavExample extends HTMLElement {
     NavExample.instantiated = true;
   }
 
-  static get observedAttributes() {
-    return ['refresh'];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'refresh' && newValue !== oldValue) {
-      this.refresh = newValue;
-      this.connectedCallback ();
-    }
-  }
-
   connectedCallback() {
-    fetchNavigation().then(navigation => {
-      navigation.sort((a, b) => a.weight - b.weight);
+    fetchNavigation().then(navigationResult => {
+      const navigation = navigationResult.items.sort((a, b) => a.weight - b.weight);
 
       this.innerHTML = `
         <nav class="nav">

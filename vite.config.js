@@ -49,6 +49,11 @@ export default defineConfig({
         rewrite: () => '/test/loggedin.html',
         changeOrigin: false
       },
+      '^/~/navigation': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/navigation.json',
+        changeOrigin: false
+      },
       '^/~/oauth/logout.*': {
         target: 'http://localhost:5173',
         rewrite: () => '/test/loggedout.html',
