@@ -64,7 +64,7 @@ export default defineConfig({
         rewrite: () => '/test/loggedin.json',
         changeOrigin: false
       },
-      '^/~/state': {
+      '^/~/state/out': {
         target: 'http://localhost:5173',
         rewrite: () => '/test/loggedout.json',
         changeOrigin: false
