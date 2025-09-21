@@ -1,4 +1,3 @@
-import { AppContainerElement } from './app-container';
 import { appMeta } from './app-meta';
 import { appRouteRegistry } from './app-route';
 
@@ -7,11 +6,6 @@ class AppElement extends HTMLElement {
 
   constructor() {
     super();
-
-    const parent = this.parentElement;
-    if (!(parent instanceof AppContainerElement)) {
-      throw new Error('Parent AppContainerElement not found');
-    }
   }
 
   static get observedAttributes(): string[] {
