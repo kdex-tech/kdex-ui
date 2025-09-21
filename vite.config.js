@@ -44,14 +44,14 @@ export default defineConfig({
         rewrite: () => '/test/downloads.html',
         changeOrigin: false
       },
-      '^/~/oauth/login.*': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/loggedin.html',
-        changeOrigin: false
-      },
       '^/~/navigation': {
         target: 'http://localhost:5173',
         rewrite: () => '/test/navigation.json',
+        changeOrigin: false
+      },
+      '^/~/oauth/login.*': {
+        target: 'http://localhost:5173',
+        rewrite: () => '/test/loggedin.html',
         changeOrigin: false
       },
       '^/~/oauth/logout.*': {

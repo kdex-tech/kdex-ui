@@ -12,18 +12,6 @@
       "label": "Downloads",
       "path": "/downloads",
       "children": []
-    },
-    {
-      "id": "login",
-      "label": "Login",
-      "path": "/login",
-      "children": []
-    },
-    {
-      "id": "logout",
-      "label": "Logout",
-      "path": "/logout",
-      "children": []
     }
   ]
 }

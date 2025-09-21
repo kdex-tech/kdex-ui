@@ -169,17 +169,10 @@ type NavigationItem = {
 function fetchNavigation(): Promise<NavigationResult> {
   const items = appRouteRegistry.getItems();
   return fetch(appMeta.navigationEndpoint, {
-    method: 'POST'
+    method: 'POST',
+    body: JSON.stringify(items),
   }).then(r => r.json()).then(r => {
-    // const item = r.items.find((i: NavigationItem) => i.id === items[0].id);
-    // if (item) {
-    // }
-    // TODO: Merge appRouteRegistry.getItems() with r.items
-
-    return {
-      hash: r.hash,
-      items: r.items,
-    };
+    return r as NavigationResult;
   });
 }
 
