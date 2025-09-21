@@ -12,6 +12,12 @@
       "label": "Downloads",
       "path": "/downloads",
       "children": []
+    },
+    {
+      "id": "login",
+      "label": "Log In",
+      "path": "/~/oauth/login.foo",
+      "children": []
     }
   ]
 }
