@@ -1,10 +1,10 @@
-import { AppElement, fetchNavigation } from '@kdex/ui';
+import { AppElement } from '@kdex/ui';
 
 export class AppExample extends AppElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.registerRoutes({label: 'Foo', path: '/foo', weight: 1}, {label: 'Bar', path: '/bar', weight: 2});
+    this.registerRoutes({ label: 'Foo', path: '/foo', weight: 1 }, { label: 'Bar', path: '/bar', weight: 2 });
   }
 
   connectedCallback() {
@@ -50,42 +50,5 @@ id: ${this.id}
   }
 }
 
-class NavExample extends HTMLElement {
-  static instantiated = false;
-
-  constructor() {
-    if (NavExample.instantiated) {
-			throw new Error('NavExample already instantiated. Only one instance is allowed.');
-		}
-    super();
-    NavExample.instantiated = true;
-  }
-
-  connectedCallback() {
-    fetchNavigation().then(navigationResult => {
-      const navigation = navigationResult.items.sort((a, b) => a.weight - b.weight);
-
-      this.innerHTML = `
-        <nav class="nav">
-          ${navigation.map(item => {
-            const children = item.children.sort((a, b) => a.weight - b.weight);
-            const childrenHTML = children.length > 0 ? `
-              <div class="nav-items">
-                ${children.map(child => `<a href="${child.path}">${child.label}</a>`).join('')}
-              </div>` : '';
-            return `
-              <div class="nav-dropdown">
-                <a class="nav-button" href="${item.path}">${item.label}</a>
-                ${childrenHTML}
-              </div>`;
-          }).join('')}
-        </nav>
-      `;
-    });
-  }
-
-}
-
 // Register the component
 customElements.define('app-example', AppExample);
-customElements.define('nav-example', NavExample);

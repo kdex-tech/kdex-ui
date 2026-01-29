@@ -29,12 +29,6 @@ const userStateSync = new UserStateSync();
 class AppMeta {
   public readonly checkBatchEndpoint: string;
   public readonly checkSingleEndpoint: string;
-  public readonly loginPath: string;
-  public readonly loginLabel: string;
-  public readonly loginCssQuery: string;
-  public readonly logoutPath: string;
-  public readonly logoutLabel: string;
-  public readonly logoutCssQuery: string;
   public readonly navigationEndpoint: string;
   public readonly pathSeparator: string;
   public readonly stateEndpoint: string;
@@ -48,28 +42,21 @@ class AppMeta {
 
     this.checkBatchEndpoint = kdexUIMeta.getAttribute('data-check-batch-endpoint') || '/~/check/batch';
     this.checkSingleEndpoint = kdexUIMeta.getAttribute('data-check-single-endpoint') || '/~/check/single';
-    this.loginPath = kdexUIMeta.getAttribute('data-login-path') || '/~/oauth/login';
-    this.loginLabel = kdexUIMeta.getAttribute('data-login-label') || 'Login';
-    this.loginCssQuery = kdexUIMeta.getAttribute('data-login-css-query') || 'nav.nav .nav-dropdown a.login';
-    this.logoutPath = kdexUIMeta.getAttribute('data-logout-path') || '/~/oauth/logout';
-    this.logoutLabel = kdexUIMeta.getAttribute('data-logout-label') || 'Logout';
-    this.logoutCssQuery = kdexUIMeta.getAttribute('data-logout-css-query') || 'nav.nav .nav-dropdown a.logout';
     this.navigationEndpoint = kdexUIMeta.getAttribute('data-navigation-endpoint') || '/~/navigation';
     this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/_/';
     this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/~/state';
 
-    document.addEventListener("DOMContentLoaded", () => {
-      fetch(this.stateEndpoint).then(
-        r => r.json()
-      ).then(
-        (us: UserState) => {
-          userStateSync.setUserState(us);
-        }
-      );
+    document.addEventListener("DOMContentLoaded", async () => {
+      const response = await fetch(this.stateEndpoint);
+      if (response.status === 401) {
+        return;
+      }
+      const data = await response.json() as UserState;
+      userStateSync.setUserState(data);
     });
   }
 
-  checkBatch(tuples: [
+  async checkBatch(tuples: [
     {
       action: string;
       resource: string;
@@ -79,37 +66,46 @@ class AppMeta {
     allowed: boolean;
     error: string | null;
   }[]> {
-    return fetch(
+    const r = await fetch(
       this.checkBatchEndpoint,
       {
         method: 'POST',
         body: JSON.stringify(tuples),
       }
-    ).then(r => r.json());
+    );
+    return await r.json();
   }
 
-  checkSingle(tuple: {
+  async checkSingle(tuple: {
     action: string;
     resource: string;
   }): Promise<{
     allowed: boolean;
     error: string | null;
   }> {
-    return fetch(
+    const r = await fetch(
       this.checkSingleEndpoint,
       {
         method: 'POST',
         body: JSON.stringify(tuple),
       }
-    ).then(r => r.json());
+    );
+    return await r.json();
   }
 }
 
 type UserState = {
-  data: Record<string, any>;
-  principal: string;
-  roles: string[];
-};
+  email: string;
+  family_name: string;
+  given_name: string;
+  middle_name: string;
+  name: string;
+  nickname: string;
+  picture: string;
+  scopes: Array<string>;
+  uid: string;
+  updated_at: number;
+} & Record<string, any>;
 
 const appMeta = new AppMeta();
 
