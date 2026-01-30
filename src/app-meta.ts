@@ -29,7 +29,6 @@ const userStateSync = new UserStateSync();
 class AppMeta {
   public readonly checkBatchEndpoint: string;
   public readonly checkSingleEndpoint: string;
-  public readonly navigationEndpoint: string;
   public readonly pathSeparator: string;
   public readonly stateEndpoint: string;
 
@@ -42,7 +41,6 @@ class AppMeta {
 
     this.checkBatchEndpoint = kdexUIMeta.getAttribute('data-check-batch-endpoint') || '/~/check/batch';
     this.checkSingleEndpoint = kdexUIMeta.getAttribute('data-check-single-endpoint') || '/~/check/single';
-    this.navigationEndpoint = kdexUIMeta.getAttribute('data-navigation-endpoint') || '/~/navigation';
     this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/_/';
     this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/~/state';
 
