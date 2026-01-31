@@ -61,45 +61,49 @@ class AppMeta {
 }
 
 // OIDC SCOPE
-type UserState = {                // OIDC SCOPE
-  sub: string;                    // openid
-  iss?: string;                    // openid
+type UserState = {                 // OIDC SCOPE
+  // Registered claims
+  at_hash?: string;                // openid
   aud?: string;                    // openid
   exp?: string;                    // openid
   iat?: string;                    // openid
-  at_hash?: string;                // openid
+  iss?: string;                    // openid
+  sub: string;                     // openid
 
-  email: string;                  // email
+  // Public claims
+  email: string;                   // email
   email_verified?: boolean;        // email
 
-  name?: string;                   // profile
+  birthdate?: string;              // profile (ISO 8601)
   family_name?: string;            // profile
+  gender?: string;                 // profile
   given_name?: string;             // profile
+  locale?: string;                 // profile
   middle_name?: string;            // profile
+  name?: string;                   // profile
   nickname?: string;               // profile
-  picture?: string;                // profile
+  picture?: string;                // profile (URL)
   preferred_username?: string;     // profile
   profile?: string;                // profile
-  website?: string;                // profile
-  gender?: string;                 // profile
-  birthdate?: string;              // profile
-  zoneinfo?: string;               // profile
-  locale?: string;                 // profile
   updated_at?: number;             // profile
+  website?: string;                // profile (URL)
+  zoneinfo?: string;               // profile
 
   address?: {
-    formatted?: string;
-    street_address?: string;
-    locality?: string;
-    region?: string;
-    postal_code?: string;
     country?: string;
-  };                              // address
+    formatted?: string;
+    locality?: string;
+    postal_code?: string;
+    region?: string;
+    street_address?: string;
+  };                               // address
 
   phone_number?: string;           // phone
   phone_number_verified?: boolean; // phone
 
-  permissions: Array<string>;
+  // Custom claims
+  entitlements: Array<string>;      // custom
+  roles: Array<string>;            // custom
 } & Record<string, any>;
 
 const appMeta = new AppMeta();
