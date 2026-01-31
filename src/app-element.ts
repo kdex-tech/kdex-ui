@@ -2,7 +2,7 @@ import { appMeta } from './app-meta';
 import { appRouteRegistry } from './app-route';
 
 class AppElement extends HTMLElement {
-  public routePath: string | null = null;
+  public routePath?: string;
 
   constructor() {
     super();
@@ -14,7 +14,7 @@ class AppElement extends HTMLElement {
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (name === 'route-path') {
-      this.routePath = newValue;
+      this.routePath = newValue || undefined;
     }
     this.connectedCallback();
   }
@@ -34,7 +34,7 @@ class AppElement extends HTMLElement {
     appRouteRegistry.navigate(`${this.basepath()}${appMeta.pathSeparator}${this.id}${path}`);
   }
 
-  registerRoutes(...paths: {label: string, path: string, weight?: number}[]): void {
+  registerRoutes(...paths: { label: string, path: string, weight?: number }[]): void {
     if (this.id) {
       appRouteRegistry.registerRoutes(this, ...paths);
     }

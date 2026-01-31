@@ -4,7 +4,7 @@ export class AppExample extends AppElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.registerRoutes({ label: 'Foo', path: '/foo', weight: 1 }, { label: 'Bar', path: '/bar', weight: 2 });
+    this.registerRoutes({ label: 'Foo', path: '/foo' }, { label: 'Bar', path: '/bar' });
   }
 
   connectedCallback() {

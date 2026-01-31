@@ -1,36 +1,12 @@
-class UserStateSync {
-  private userState: UserState | null = null;
-  private callbacks: ((userState: UserState) => void)[] = [];
-
-  public getUserState(): UserState | null {
-    return this.userState;
-  }
-
-  public onUserStateChange(callback: (userState: UserState) => void): void {
-    if (this.userState) {
-      callback(this.userState);
-    }
-
-    this.callbacks.push(callback);
-  }
-
-  public setUserState(userState: UserState): void {
-    this.userState = userState;
-    this.callbacks.forEach(callback => callback(userState));
-  }
-
-  public unregisterUserStateChange(callback: (userState: UserState) => void): void {
-    this.callbacks = this.callbacks.filter(c => c !== callback);
-  }
-}
-
-const userStateSync = new UserStateSync();
-
 class AppMeta {
-  public readonly checkBatchEndpoint: string;
-  public readonly checkSingleEndpoint: string;
+  public readonly checkEndpoint: string;
+  public readonly loginEndpoint: string;
+  public readonly logoutEndpoint: string;
+  public readonly navigationEndpoint: string;
   public readonly pathSeparator: string;
+  public readonly schemaEndpoint: string;
   public readonly stateEndpoint: string;
+  public readonly translationEndpoint: string;
 
   constructor() {
     const kdexUIMeta = document.querySelector('html head meta[name="kdex-ui"]');
@@ -39,77 +15,101 @@ class AppMeta {
       throw new Error('kdex-ui meta tag not found');
     }
 
-    this.checkBatchEndpoint = kdexUIMeta.getAttribute('data-check-batch-endpoint') || '/~/check/batch';
-    this.checkSingleEndpoint = kdexUIMeta.getAttribute('data-check-single-endpoint') || '/~/check/single';
-    this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/_/';
-    this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/~/state';
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      const response = await fetch(this.stateEndpoint);
-      if (response.status === 401) {
-        return;
-      }
-      const data = await response.json() as UserState;
-      userStateSync.setUserState(data);
-    });
+    this.checkEndpoint = kdexUIMeta.getAttribute('data-check-endpoint') || '/-/check';
+    this.loginEndpoint = kdexUIMeta.getAttribute('data-login-endpoint') || '/-/login';
+    this.logoutEndpoint = kdexUIMeta.getAttribute('data-logout-endpoint') || '/-/logout';
+    this.navigationEndpoint = kdexUIMeta.getAttribute('data-navigation-endpoint') || '/-/navigation';
+    this.pathSeparator = kdexUIMeta.getAttribute('data-path-separator') || '/-/';
+    this.schemaEndpoint = kdexUIMeta.getAttribute('data-schema-endpoint') || '/-/schema';
+    this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/-/state';
+    this.translationEndpoint = kdexUIMeta.getAttribute('data-translation-endpoint') || '/-/translation';
   }
 
-  async checkBatch(tuples: [
-    {
-      action: string;
-      resource: string;
-    }
-  ]): Promise<{
-    resource: string;
-    allowed: boolean;
-    error: string | null;
-  }[]> {
-    const r = await fetch(
-      this.checkBatchEndpoint,
-      {
-        method: 'POST',
-        body: JSON.stringify(tuples),
-      }
-    );
-    return await r.json();
-  }
-
-  async checkSingle(tuple: {
+  async check(...tuples: {
     action: string;
     resource: string;
-  }): Promise<{
+  }[]
+  ): Promise<{
+    resource: string;
     allowed: boolean;
-    error: string | null;
-  }> {
-    const r = await fetch(
-      this.checkSingleEndpoint,
+    error: string | undefined;
+  }[]> {
+    const response = await fetch(
+      this.checkEndpoint,
       {
+        body: JSON.stringify(tuples),
+        credentials: "same-origin",
         method: 'POST',
-        body: JSON.stringify(tuple),
       }
     );
-    return await r.json();
+    return await response.json();
+  }
+
+  async userState(): Promise<UserState | undefined> {
+    const response = await fetch(
+      this.stateEndpoint,
+      {
+        credentials: "same-origin",
+        method: 'GET',
+      }
+    );
+    if (response.status === 401) {
+      return;
+    }
+    return await response.json();
   }
 }
 
-type UserState = {
-  email: string;
-  family_name: string;
-  given_name: string;
-  middle_name: string;
-  name: string;
-  nickname: string;
-  picture: string;
-  scopes: Array<string>;
-  uid: string;
-  updated_at: number;
+// OIDC SCOPE
+type UserState = {                // OIDC SCOPE
+  sub: string;                    // openid
+  iss?: string;                    // openid
+  aud?: string;                    // openid
+  exp?: string;                    // openid
+  iat?: string;                    // openid
+  at_hash?: string;                // openid
+
+  email: string;                  // email
+  email_verified?: boolean;        // email
+
+  name?: string;                   // profile
+  family_name?: string;            // profile
+  given_name?: string;             // profile
+  middle_name?: string;            // profile
+  nickname?: string;               // profile
+  picture?: string;                // profile
+  preferred_username?: string;     // profile
+  profile?: string;                // profile
+  website?: string;                // profile
+  gender?: string;                 // profile
+  birthdate?: string;              // profile
+  zoneinfo?: string;               // profile
+  locale?: string;                 // profile
+  updated_at?: number;             // profile
+
+  address?: {
+    formatted?: string;
+    street_address?: string;
+    locality?: string;
+    region?: string;
+    postal_code?: string;
+    country?: string;
+  };                              // address
+
+  phone_number?: string;           // phone
+  phone_number_verified?: boolean; // phone
+
+  permissions: Array<string>;
 } & Record<string, any>;
 
 const appMeta = new AppMeta();
+const check = appMeta.check.bind(appMeta);
+const userState = appMeta.userState.bind(appMeta);
 
 export {
   AppMeta,
-  appMeta,
   UserState,
-  userStateSync,
+  appMeta,
+  check,
+  userState,
 };

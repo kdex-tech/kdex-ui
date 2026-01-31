@@ -6,23 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KDex UI Components Test Page</title>
   <link rel="stylesheet" href="/test/main.css" type="text/css">
-  <meta name="kdex-ui"
-    data-check-batch-endpoint="/~/check/batch"
-    data-check-single-endpoint="/~/check/single"
-    data-login-path="/~/oauth/login"
-    data-login-label="Login"
-    data-login-css-query="nav.nav .nav-dropdown a.login"
-    data-logout-path="/~/oauth/logout"
-    data-logout-label="Logout"
-    data-logout-css-query="nav.nav .nav-dropdown a.logout"
-    data-navigation-endpoint="/~/navigation-in"
-    data-path-separator="/_/"
-    data-state-endpoint="/~/state/out"
-  >
+  <meta name="kdex-ui" data-check-endpoint="/-/check" data-login-endpoint="/-/login" data-logout-endpoint="/-/logout"
+    data-path-separator="/-/" data-state-endpoint="/-/state" />
 </head>
 
 <body>
-  <nav-example></nav-example>
+  <a href="/app" id="downloads">Home</a> | <a id="signin"></a>
 
   <div class="test-container">
     <h2>Downloads: Component Testing Area</h2>
@@ -31,8 +20,21 @@
   </div>
 
   <script type="module">
-    import '@kdex/ui';
+    import { appMeta, userState } from '@kdex/ui';
     import '/test/fixtures/app-example.js';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const signin = document.getElementById('signin');
+      const user = await userState();
+
+      if (user) {
+        signin.textContent = 'Sign Out';
+        signin.href = appMeta.logoutEndpoint;
+      } else {
+        signin.textContent = 'Sign In';
+        signin.href = appMeta.loginEndpoint;
+      }
+    });
   </script>
 </body>
 

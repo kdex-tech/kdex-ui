@@ -4,31 +4,29 @@ import { createBrowserHistory, History } from 'history';
 class AppRouteItem {
   constructor(
     private config: {
-      host?: HTMLElement;
+      host: HTMLElement;
       id: string;
       label: string;
       path: string;
-      weight?: number;
     }
   ) {
     this.host = config.host;
     this.id = config.id;
     this.label = config.label;
     this.path = config.path;
-    this.weight = config.weight;
   }
 
-  host?: HTMLElement;
+  host: HTMLElement;
   id: string;
   label: string;
   path: string;
-  weight?: number;
 }
 
 class AppRouteRegistry {
-  private items: AppRouteItem[] = [];
   private callbacks: ((items: AppRouteItem[]) => void)[] = [];
+  private items: AppRouteItem[] = [];
   private history: History;
+  private uniqueHosts: Set<HTMLElement> = new Set();
 
   constructor() {
     this.history = createBrowserHistory();
@@ -37,40 +35,41 @@ class AppRouteRegistry {
       this._navigateToAppRoutePath();
     });
 
-    document.addEventListener("DOMContentLoaded", this._resetNavigationLinks.bind(this));
+    document.addEventListener("click", this._handleGlobalClick.bind(this));
     document.addEventListener("DOMContentLoaded", this._navigateToAppRoutePath.bind(this));
   }
 
   _navigateToAppRoutePath(): void {
     const currentRoute = this.currentRoutepath();
-    const apps = new Set(this.getItems().map(item => item.host).filter(host => host !== undefined));
+    if (!currentRoute) {
+      return
+    }
 
-    for (const app of apps) {
-      if (currentRoute && app.id === currentRoute.id) {
-        app.setAttribute('route-path', `/${currentRoute.path}`);
-      }
-      else {
-        app.setAttribute('route-path', '');
+    for (const host of this.uniqueHosts) {
+      const targetPath = host.id === currentRoute.id ? currentRoute.path : '';
+      if (host.getAttribute('route-path') !== targetPath) {
+        host.setAttribute('route-path', targetPath);
       }
     }
   }
 
-  _resetNavigationLinks(): void {
-    for (let link of document.querySelectorAll('a')) {
-      if (link.href.startsWith(document.location.origin + this.basepath() + appMeta.pathSeparator)) {
-        const url = new URL(link.href);
-        link.onclick = () => {
-          this.history.push(url.pathname);
-          return false;
-        };
-        link.href = 'javascript:void(0)';
-      }
+  _refreshHosts(): void {
+    this.uniqueHosts.clear();
+    for (const item of this.items) {
+      this.uniqueHosts.add(item.host);
     }
   }
 
-  addItem(item: AppRouteItem): void {
-    this.items.push(item);
-    this.callbacks.forEach(callback => callback(this.items));
+  _handleGlobalClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    // Walk up the DOM to find the anchor tag (handles clicks on <span> inside <a>)
+    const link = target.closest('a');
+
+    if (link && link.href.startsWith(document.location.origin + this.basepath() + appMeta.pathSeparator)) {
+      event.preventDefault();
+      const url = new URL(link.href);
+      this.history.push(url.pathname);
+    }
   }
 
   basepath(): string {
@@ -83,68 +82,66 @@ class AppRouteRegistry {
     return window.location.pathname;
   }
 
-  currentRoutepath(): AppRouteItem | null {
+  currentRoutepath(): { id: string, label: string, path: string } | null {
     if (window.location.pathname.includes(appMeta.pathSeparator)) {
       const routePath = window.location.pathname.split(appMeta.pathSeparator, 2)[1];
 
       const [id, path] = routePath.split('/', 2);
-      return new AppRouteItem({
+      return {
         id,
         label: document.title,
-        path,
-      });
+        path: `/${path}`,
+      };
     }
 
     return null;
   }
 
-  findItem(id: string, path: string): AppRouteItem | null {
-    return this.items.find(item => item.id === id && item.path === path) || null;
+  findRoute(predicate: (item: AppRouteItem) => boolean): AppRouteItem | undefined {
+    return this.items.find(predicate);
   }
 
-  getItems(): AppRouteItem[] {
-    return this.items;
+  filterRoutes(predicate: (item: AppRouteItem) => boolean): Array<AppRouteItem> {
+    return this.items.filter(predicate);
   }
 
   navigate(location: string): void {
     this.history.push(location);
   }
 
-  onItemAdded(callback: (items: AppRouteItem[]) => void): void {
+  onRoutesChanged(callback: (items: AppRouteItem[]) => void): void {
     this.callbacks.push(callback);
+    callback(this.items)
   }
 
-  registerRoutes(host: HTMLElement, ...paths: { label: string, path: string, weight?: number }[]): void {
+  registerRoutes(host: HTMLElement, ...paths: { label: string, path: string }[]): void {
     for (const path of paths) {
-      this.addItem(new AppRouteItem({
+      this.items.push(new AppRouteItem({
         host,
         id: `${host.id}-${path.path}`,
         label: path.label,
         path: path.path,
-        weight: path.weight,
       }));
     }
+    this._refreshHosts();
+    this.callbacks.forEach(callback => callback(this.items));
   }
 
-  removeItem(item: AppRouteItem): void {
-    this.items = this.items.filter(i => i !== item);
+  unregisterRoutes(host: HTMLElement): void {
+    this.items = this.items.filter(item => item.host !== host);
+    this._refreshHosts();
     this.callbacks.forEach(callback => callback(this.items));
   }
 }
 
-type NavigationItem = {
-  children: NavigationItem[];
-  id: string;
-  label: string;
-  path: string;
-  weight?: number;
-}
-
 const appRouteRegistry = new AppRouteRegistry();
+const navigate = appRouteRegistry.navigate.bind(appRouteRegistry)
+const onRoutesChanged = appRouteRegistry.onRoutesChanged.bind(appRouteRegistry)
 
 export {
   AppRouteItem,
   AppRouteRegistry,
   appRouteRegistry,
-  NavigationItem,
+  navigate,
+  onRoutesChanged
 };

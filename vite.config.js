@@ -22,6 +22,39 @@ export default defineConfig({
     }
   },
   plugins: [
+    {
+      name: 'local-dev-middleware',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const cookies = req.headers.cookie || '';
+          const isLoggedIn = cookies.includes('auth=true');
+
+          if (req.url === '/' || req.url.startsWith('/app')) {
+            req.url = '/test/index.html';
+          } else if (req.url.startsWith('/downloads')) {
+            req.url = '/test/downloads.html';
+          } else if (req.url.startsWith('/-/login')) {
+            res.setHeader('Set-Cookie', 'auth=true; Path=/');
+            res.writeHead(302, { Location: '/app' });
+            res.end();
+            return;
+          } else if (req.url.startsWith('/-/logout')) {
+            res.setHeader('Set-Cookie', 'auth=false; Path=/; Max-Age=0');
+            res.writeHead(302, { Location: '/app' });
+            res.end();
+            return;
+          } else if (req.url.startsWith('/-/state')) {
+            if (isLoggedIn) {
+              req.url = '/test/loggedin.json'
+            } else {
+              res.writeHead(401, {});
+              res.end();
+            }
+          }
+          next();
+        });
+      }
+    },
     vitePluginExternal({
       externalizeDeps: Object.keys(pkg.dependencies)
     }),
@@ -32,49 +65,6 @@ export default defineConfig({
   ],
   server: {
     open: 'app',
-    proxy: {
-      // Handle all paths under /app/* and redirect to index.html
-      '^/app.*': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/index.html',
-        changeOrigin: false
-      },
-      '^/downloads.*': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/downloads.html',
-        changeOrigin: false
-      },
-      '^/~/navigation-in': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/navigation-in.json',
-        changeOrigin: false
-      },
-      '^/~/navigation-out': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/navigation-out.json',
-        changeOrigin: false
-      },
-      '^/~/oauth/login.*': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/loggedin.html',
-        changeOrigin: false
-      },
-      '^/~/oauth/logout.*': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/loggedout.html',
-        changeOrigin: false
-      },
-      '^/~/state/in': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/loggedin.json',
-        changeOrigin: false
-      },
-      '^/~/state/out': {
-        target: 'http://localhost:5173',
-        rewrite: () => '/test/loggedout.json',
-        changeOrigin: false
-      },
-    },
     watch: {
       usePolling: true,
       ignored: ['!**/node_modules/**']
@@ -85,7 +75,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'src'),
+      '@kdex/ui': resolve(__dirname, 'src')
     }
   },
   root: '.',

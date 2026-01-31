@@ -1,10 +1,7 @@
 {
-  "data": {
-    "name": "test",
-    "email": "test@test.com"
-  },
-  "principal": "test",
-  "roles": [
+  "email": "test@test.com",
+  "sub": "test",
+  "permissions": [
     "test"
   ]
 }
