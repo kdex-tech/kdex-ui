@@ -66,8 +66,12 @@ class AppRouteRegistry {
     const link = target.closest('a');
 
     if (link && link.href.startsWith(document.location.origin + this.basepath() + appMeta.pathSeparator)) {
-      event.preventDefault();
       const url = new URL(link.href);
+      // also make sure link.href path is not in appMeta.collectiveEndpoints
+      if (appMeta.collectiveEndpoints.includes(url.pathname)) {
+        return
+      }
+      event.preventDefault();
       this.history.push(url.pathname);
     }
   }

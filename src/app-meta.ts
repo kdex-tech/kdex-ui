@@ -8,6 +8,8 @@ class AppMeta {
   public readonly stateEndpoint: string;
   public readonly translationEndpoint: string;
 
+  public readonly collectiveEndpoints: Array<string>;
+
   constructor() {
     const kdexUIMeta = document.querySelector('html head meta[name="kdex-ui"]');
 
@@ -23,6 +25,16 @@ class AppMeta {
     this.schemaEndpoint = kdexUIMeta.getAttribute('data-schema-endpoint') || '/-/schema';
     this.stateEndpoint = kdexUIMeta.getAttribute('data-state-endpoint') || '/-/state';
     this.translationEndpoint = kdexUIMeta.getAttribute('data-translation-endpoint') || '/-/translation';
+
+    this.collectiveEndpoints = [
+      this.checkEndpoint,
+      this.loginEndpoint,
+      this.logoutEndpoint,
+      this.navigationEndpoint,
+      this.schemaEndpoint,
+      this.stateEndpoint,
+      this.translationEndpoint
+    ]
   }
 
   async check(...tuples: {
