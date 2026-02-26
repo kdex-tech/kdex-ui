@@ -1,0 +1,11 @@
+const meta = document.createElement('meta');
+meta.name = 'kdex-ui';
+meta.setAttribute('data-check-endpoint', '/-/check');
+meta.setAttribute('data-login-endpoint', '/-/login');
+meta.setAttribute('data-logout-endpoint', '/-/logout');
+meta.setAttribute('data-navigation-endpoint', '/-/navigation');
+meta.setAttribute('data-path-separator', '/-/');
+meta.setAttribute('data-schema-endpoint', '/-/schema');
+meta.setAttribute('data-state-endpoint', '/-/state');
+meta.setAttribute('data-translation-endpoint', '/-/translation');
+document.head.appendChild(meta);
