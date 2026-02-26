@@ -50,7 +50,8 @@ jobs:
     name: Publish
     needs: ci
     runs-on: ubuntu-latest
-    if: ${{ env.PUBLISH == 'true' }}
     steps:
+
     - name: Publish NPM Package
+      if: ${{ env.PUBLISH == 'true' }}
       uses: ./.github/actions/publish-npm-package
