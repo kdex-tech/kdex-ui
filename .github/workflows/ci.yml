@@ -48,4 +48,4 @@ jobs:
 
     - name: Publish NPM Package
       if: ${{ env.PUBLISH == 'true' }}
-      uses: ./.github/actions/publish-npm-package/action.yml
+      uses: ./.github/actions/publish-npm-package
