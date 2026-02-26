@@ -52,6 +52,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Clone the code
+      uses: actions/checkout@v6
+
     - name: Publish NPM Package
       if: ${{ env.PUBLISH == 'true' }}
-      uses: ./.github/actions/publish-npm-package
+      uses: ./.github/actions/publish-npm-package/action.yml
