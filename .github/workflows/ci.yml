@@ -23,8 +23,8 @@ defaults:
     shell: bash
 
 permissions:
-  packages: write
   contents: read
+  packages: write
 
 jobs:
   ci:
