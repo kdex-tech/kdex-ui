@@ -5,17 +5,6 @@ runs:
   using: "composite"
   steps:
 
-  - name: Setup Node.js
-    uses: actions/setup-node@v6
-    with:
-      node-version: 20
-      cache: 'npm'
-
-  - name: Install dependencies
-    shell: bash
-    run: |
-      npm ci
-
   - name: Log in to registry with NPM
     shell: bash
     run: |

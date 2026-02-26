@@ -46,15 +46,6 @@ jobs:
     - name: Run Unit Tests
       run: npm test
 
-  publish:
-    name: Publish
-    needs: ci
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Clone the code
-      uses: actions/checkout@v6
-
     - name: Publish NPM Package
       if: ${{ env.PUBLISH == 'true' }}
       uses: ./.github/actions/publish-npm-package/action.yml
