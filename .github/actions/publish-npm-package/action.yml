@@ -1,0 +1,30 @@
+name: 'Publish NPM Package'
+description: 'Publish NPM Package'
+
+runs:
+  using: "composite"
+  steps:
+
+  - name: Clone the code
+    uses: actions/checkout@v6
+
+  - name: Setup Node.js
+    uses: actions/setup-node@v6
+    with:
+      node-version: 20
+      cache: 'npm'
+
+  - name: Install dependencies
+    shell: bash
+    run: |
+      npm ci
+
+  - name: Log in to registry with NPM
+    shell: bash
+    run: |
+      echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" > .npmrc
+
+  - name: Publish NPM package
+    shell: bash
+    run: |
+      npm publish
