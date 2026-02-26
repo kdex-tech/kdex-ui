@@ -1,4 +1,4 @@
-import { AppElement } from '@kdex/ui';
+import { AppElement } from '@kdex-tech/ui';
 
 export class AppExample extends AppElement {
   constructor() {

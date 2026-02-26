@@ -1,5 +1,5 @@
 {
-  "name": "@kdex/ui",
+  "name": "@kdex-tech/ui",
   "version": "1.2.8",
   "type": "module",
   "main": "dist/index.mjs",

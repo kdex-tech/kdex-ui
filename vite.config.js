@@ -76,7 +76,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      '@kdex/ui': resolve(__dirname, 'src')
+      '@kdex-tech/ui': resolve(__dirname, 'src')
     }
   },
   root: '.',
