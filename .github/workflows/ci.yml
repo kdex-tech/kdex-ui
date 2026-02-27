@@ -45,7 +45,6 @@ jobs:
 
     - name: Run Unit Tests
       run: npm test
-
-    - name: Publish NPM Package
-      if: ${{ env.PUBLISH == 'true' }}
-      uses: ./.github/actions/publish-npm-package
+    # - name: Publish NPM Package
+    #   if: ${{ env.PUBLISH == 'true' }}
+    #   uses: ./.github/actions/publish-npm-package
