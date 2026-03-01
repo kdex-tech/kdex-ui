@@ -12,68 +12,12 @@ class AppRouter {
     this._navigateToAppRoutePath();
   }
 
-  basepath(): string {
-    if (window.location.pathname.includes(appMeta.pathSeparator)) {
-      return window.location.pathname.split(appMeta.pathSeparator, 2)[0];
-    }
-    if (window.location.pathname.endsWith('/')) {
-      return window.location.pathname.slice(0, -1);
-    }
-    return window.location.pathname;
-  }
-
-  currentAppRoute(): AppRoute | undefined {
-    if (window.location.pathname.includes(appMeta.pathSeparator)) {
-      const routePath = window.location.pathname.split(appMeta.pathSeparator, 2)[1];
-
-      const parts = routePath.split('/');
-      const viewport = parts.shift() || 'main';
-      const appId = parts.shift() || '';
-      const appPath = '/' + parts.join('/');
-      return { appId, appPath, viewport };
-    }
-  }
-
-  navigate(appRoute: AppRoute): void {
-    if (!appRoute.appPath.startsWith('/')) {
-      appRoute.appPath = '/' + appRoute.appPath;
-    }
-    window.history.pushState({}, '', this.basepath() + appMeta.pathSeparator + appRoute.viewport + '/' + appRoute.appId + appRoute.appPath);
-  }
-
-  /**
-   * Dynamically registers or updates an app template.
-   * If the app is currently active, it triggers a re-mount.
-   */
-  registerApp(appId: string, templateHtml: string): void {
-    // 1. Create or Update the Template in the "Library"
-    let template = document.querySelector(`template[id="content-${appId}"]`) as HTMLTemplateElement;
-
-    if (!template) {
-      template = document.createElement('template');
-      template.id = `content-${appId}`;
-      document.body.appendChild(template);
-    }
-
-    template.innerHTML = templateHtml;
-
-    // 2. Hot-Swap: If this app is currently active, force a re-navigation
-    // to swap the live instance with the new version.
-    if (this.currentActiveRoute?.appId === appId) {
-      console.log(`App Router: Hot-swapping active app "${appId}"`);
-      // Clearing the tracker forces the guard to allow the re-mount
-      const savedRoute = { ...this.currentActiveRoute };
-      this.currentActiveRoute = undefined;
-      this._navigateToAppRoutePath();
-    }
-  }
-
   _handleGlobalClick(event: MouseEvent): void {
     const link = event.composedPath().find((el): el is HTMLAnchorElement =>
       el instanceof HTMLElement && el.tagName === 'A'
     );
 
-    if (link && link.href.startsWith(document.location.origin + this.basepath() + appMeta.pathSeparator)) {
+    if (link && link.href.startsWith(window.location.origin + this.basepath() + appMeta.pathSeparator)) {
       const url = new URL(link.href);
       // also make sure link.href path is not in appMeta.collectiveEndpoints
       if (appMeta.collectiveEndpoints.includes(url.pathname)) {
@@ -176,6 +120,68 @@ class AppRouter {
       registry._navigateToAppRoutePath();
     };
   }
+
+  basepath(): string {
+    if (window.location.pathname.includes(appMeta.pathSeparator)) {
+      return window.location.pathname.split(appMeta.pathSeparator, 2)[0];
+    }
+    if (window.location.pathname.endsWith('/')) {
+      return window.location.pathname.slice(0, -1);
+    }
+    return window.location.pathname;
+  }
+
+  currentAppRoute(): AppRoute | undefined {
+    if (window.location.pathname.includes(appMeta.pathSeparator)) {
+      const routePath = window.location.pathname.split(appMeta.pathSeparator, 2)[1];
+
+      const parts = routePath.split('/');
+      const viewport = parts.shift() || 'main';
+      const appId = parts.shift() || '';
+      const appPath = '/' + parts.join('/');
+      return { appId, appPath, viewport };
+    }
+  }
+
+  navigate(appRoute: AppRoute): void {
+    if (!appRoute.appPath.startsWith('/')) {
+      appRoute.appPath = '/' + appRoute.appPath;
+    }
+    window.history.pushState({}, '', this.basepath() + appMeta.pathSeparator + appRoute.viewport + '/' + appRoute.appId + appRoute.appPath);
+  }
+
+  /**
+   * Dynamically registers or updates an app template.
+   * If the app is currently active, it triggers a re-mount.
+   */
+  registerApp(appId: string, templateHtml: string): void {
+    // 1. Create or Update the Template in the "Library"
+    let template = document.querySelector(`template[id="content-${appId}"]`) as HTMLTemplateElement;
+
+    if (!template) {
+      template = document.createElement('template');
+      template.id = `content-${appId}`;
+      document.body.appendChild(template);
+    }
+
+    template.innerHTML = templateHtml;
+
+    // 2. Hot-Swap: If this app is currently active, force a re-mount.
+    if (this.currentActiveRoute?.appId === appId) {
+      console.log(`App Router: Hot-swapping active app "${appId}"`);
+      
+      // Remove the existing element to force a re-mount in _navigateToAppRoutePath
+      const viewport = document.querySelector(`[data-viewport="${this.currentActiveRoute.viewport}"]`);
+      const existingEl = viewport?.querySelector(`[data-content-id="${appId}"]`);
+      if (existingEl) {
+        existingEl.remove();
+      }
+
+      // Clearing the tracker forces the guard to allow the re-mount
+      this.currentActiveRoute = undefined;
+      this._navigateToAppRoutePath();
+    }
+  }
 }
 
 const appRouter = new AppRouter();
@@ -244,13 +250,6 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
       }
     }
 
-    // 3. Automated Attribute Observation
-    static get observedAttributes() {
-      // @ts-ignore - Access static member of base class if it exists
-      const baseAttrs = (BaseClass as any).observedAttributes || [];
-      return [...baseAttrs, 'active-route', 'app-path'];
-    }
-
     attributeChangedCallback(name: string, old: string | null, value: string | null) {
       if (name === 'active-route') this.active = value !== null;
       if (name === 'app-path') this.appPath = value || '';
@@ -258,8 +257,26 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
       super.attributeChangedCallback?.(name, old, value);
     }
 
+    connectedCallback() {
+      // 1. Always call super in a Web Component
+      // @ts-ignore
+      super.connectedCallback?.();
+
+      // 2. Self-Initialize: Render immediately based on current properties
+      // Even if the router hasn't "poked" us yet, we render our initial state.
+      if (typeof (this as any).onRouteActivated === 'function') {
+        (this as any).onRouteActivated(this.appPath || '/');
+      }
+    }
+
     navigate(appPath: string, viewport: string = this.parentElement?.getAttribute('data-viewport') || "error"): void {
       appRouter.navigate({ appId: this.getAttribute('data-content-id') || "error", appPath, viewport });
+    }
+
+    static get observedAttributes() {
+      // @ts-ignore - Access static member of base class if it exists
+      const baseAttrs = (BaseClass as any).observedAttributes || [];
+      return [...baseAttrs, 'active-route', 'app-path'];
     }
 
     // Optional: Declare the hooks so TS knows they might exist

@@ -1,5 +1,6 @@
 class AppMeta {
   public readonly checkEndpoint: string;
+  public readonly collectiveEndpoints: Array<string>;
   public readonly loginEndpoint: string;
   public readonly logoutEndpoint: string;
   public readonly navigationEndpoint: string;
@@ -7,8 +8,6 @@ class AppMeta {
   public readonly schemaEndpoint: string;
   public readonly stateEndpoint: string;
   public readonly translationEndpoint: string;
-
-  public readonly collectiveEndpoints: Array<string>;
 
   constructor() {
     const kdexUIMeta = document.querySelector('html head meta[name="kdex-ui"]');
