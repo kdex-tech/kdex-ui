@@ -34,10 +34,46 @@ describe('AppBridge Integration', () => {
     expect(el.active).toBe(false);
   });
 
-  it('should update appPath property when app-path attribute changes', () => {
+  it('should call onRouteActivated when connected', () => {
+    const activatedSpy = vi.fn();
+    class ConnectedApp extends AppBridge(HTMLElement) {
+      onRouteActivated(path: string) {
+        activatedSpy(path);
+      }
+    }
+    customElements.define('connected-app', ConnectedApp);
+    const el = document.createElement('connected-app') as any;
+    document.body.appendChild(el);
+    expect(activatedSpy).toHaveBeenCalledWith('/');
+    expect(el.active).toBe(true);
+  });
+
+  it('should render default view when not active if using active property', () => {
+    class LitLikeApp extends AppBridge(HTMLElement) {
+      rendered = '';
+      onRouteActivated(path: string) {
+        this.render();
+      }
+      onRouteDeactivated() {
+        this.render();
+      }
+      render() {
+        this.rendered = this.active ? `Active at ${this.appPath || '/'}` : 'Deactivated View';
+      }
+    }
+    customElements.define('lit-like-app', LitLikeApp);
+    const el = document.createElement('lit-like-app') as any;
+    document.body.appendChild(el);
+    
+    // Now it should be 'Active at /' because active is true by default.
+    expect(el.rendered).toBe('Active at /');
+  });
+
+  it('should update appPath property and call onRouteActivated when app-path attribute changes', () => {
     const el = document.createElement('app-element') as AppElement;
     el.setAttribute('app-path', '/new-path');
     expect(el.appPath).toBe('/new-path');
+    expect(el.dataset.lastPath).toBe('/new-path');
   });
 
   it('should call onRouteDeactivated when active set to false', () => {

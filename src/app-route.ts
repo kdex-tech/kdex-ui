@@ -224,7 +224,7 @@ type Constructor<T = {}> = new (...args: any[]) => T;
 const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
   return class extends BaseClass {
     // 1. Internal state
-    _active = false;
+    _active = true;
     _appPath = '';
 
     // 2. Define Properties (Standard getters/setters)
@@ -244,9 +244,11 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
     set appPath(value: string) {
       const old = this._appPath;
       this._appPath = value;
-      // @ts-ignore
-      if (old !== this._appPath && typeof (this as any).requestUpdate === 'function') {
-        (this as any).requestUpdate('appPath', old);
+      if (old !== this._appPath) {
+        // @ts-ignore
+        if (this.active) this.onRouteActivated?.(this._appPath);
+        // @ts-ignore
+        if (typeof (this as any).requestUpdate === 'function') (this as any).requestUpdate('appPath', old);
       }
     }
 
