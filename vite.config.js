@@ -56,7 +56,7 @@ export default defineConfig({
       }
     },
     vitePluginExternal({
-      externalizeDeps: Object.keys(pkg.dependencies)
+      externalizeDeps: Object.keys(pkg.dependencies || {})
     }),
     dts({
       insertTypesEntry: true,
