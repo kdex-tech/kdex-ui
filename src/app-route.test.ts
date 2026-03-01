@@ -17,4 +17,11 @@ describe('AppBridge Integration', () => {
     expect(el).toBeInstanceOf(HTMLElement);
     expect('active' in el).toBe(true);
   });
+
+  it('should call onRouteActivated when active', () => {
+    const el = document.createElement('app-element') as AppElement;
+    el.appPath = '/test';
+    el.active = true;
+    expect(el.dataset.lastPath).toBe('/test');
+  });
 });

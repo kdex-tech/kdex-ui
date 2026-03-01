@@ -1,7 +1,9 @@
 import { appMeta } from './app-meta';
 
+type AppRoute = { appId: string, appPath: string, viewport: string };
+
 class AppRouter {
-  private currentActiveRoute: { appId: string, appPath: string } | undefined;
+  private currentActiveRoute: AppRoute | undefined;
 
   constructor() {
     window.addEventListener('popstate', () => this._navigateToAppRoutePath());
@@ -10,53 +12,57 @@ class AppRouter {
     this._navigateToAppRoutePath();
   }
 
-  _navigateToAppRoutePath(): void {
-    const currentAppRoute = this.currentAppRoute();
+  basepath(): string {
+    if (window.location.pathname.includes(appMeta.pathSeparator)) {
+      return window.location.pathname.split(appMeta.pathSeparator, 2)[0];
+    }
+    if (window.location.pathname.endsWith('/')) {
+      return window.location.pathname.slice(0, -1);
+    }
+    return window.location.pathname;
+  }
 
-    // Guard: Do nothing if we are already exactly here
-    if (this.currentActiveRoute?.appId === currentAppRoute?.appId &&
-      this.currentActiveRoute?.appPath === currentAppRoute?.appPath) {
-      return;
+  currentAppRoute(): AppRoute | undefined {
+    if (window.location.pathname.includes(appMeta.pathSeparator)) {
+      const routePath = window.location.pathname.split(appMeta.pathSeparator, 2)[1];
+
+      const parts = routePath.split('/');
+      const viewport = parts.shift() || 'main';
+      const appId = parts.shift() || '';
+      const appPath = '/' + parts.join('/');
+      return { appId, appPath, viewport };
+    }
+  }
+
+  navigate(location: string): void {
+    window.history.pushState({}, '', location);
+  }
+
+  /**
+   * Dynamically registers or updates an app template.
+   * If the app is currently active, it triggers a re-mount.
+   */
+  registerApp(appId: string, templateHtml: string): void {
+    // 1. Create or Update the Template in the "Library"
+    let template = document.querySelector(`template[id="content-${appId}"]`) as HTMLTemplateElement;
+
+    if (!template) {
+      template = document.createElement('template');
+      template.id = `content-${appId}`;
+      document.body.appendChild(template);
     }
 
-    // 1. Cleanup previous occupant
-    if (this.currentActiveRoute && this.currentActiveRoute.appId !== currentAppRoute?.appId) {
-      const activeEl = document.querySelector(`[data-app-slot="${this.currentActiveRoute.appId}"]`);
-      if (activeEl) {
-        activeEl.removeAttribute('active-route');
-        activeEl.removeAttribute('app-path');
+    template.innerHTML = templateHtml;
 
-        if ('active' in activeEl) activeEl.active = false;
-        if ('appPath' in activeEl) activeEl.appPath = '';
-
-        activeEl.dispatchEvent(new CustomEvent('app-route-deactivated', {
-          bubbles: true,
-          composed: true
-        }));
-      }
-    }
-
-    if (!currentAppRoute) {
+    // 2. Hot-Swap: If this app is currently active, force a re-navigation
+    // to swap the live instance with the new version.
+    if (this.currentActiveRoute?.appId === appId) {
+      console.log(`App Router: Hot-swapping active app "${appId}"`);
+      // Clearing the tracker forces the guard to allow the re-mount
+      const savedRoute = { ...this.currentActiveRoute };
       this.currentActiveRoute = undefined;
-      return
+      this._navigateToAppRoutePath();
     }
-
-    const targetEl = document.querySelector(`[data-app-slot="${currentAppRoute.appId}"]`);
-    if (targetEl) {
-      targetEl.setAttribute('active-route', '');
-      targetEl.setAttribute('app-path', currentAppRoute.appPath);
-
-      if ('active' in targetEl) targetEl.active = true;
-      if ('appPath' in targetEl) targetEl.appPath = currentAppRoute.appPath;
-
-      targetEl.dispatchEvent(new CustomEvent('app-route-change', {
-        detail: { path: currentAppRoute.appPath },
-        bubbles: true,
-        composed: true
-      }));
-    }
-
-    this.currentActiveRoute = currentAppRoute;
   }
 
   _handleGlobalClick(event: MouseEvent): void {
@@ -73,6 +79,80 @@ class AppRouter {
       event.preventDefault();
       this.navigate(url.pathname);
     }
+  }
+
+  _navigateToAppRoutePath(): void {
+    const currentAppRoute = this.currentAppRoute();
+
+    // Guard: Do nothing if we are already exactly here
+    if (this.currentActiveRoute?.viewport === currentAppRoute?.viewport &&
+      this.currentActiveRoute?.appId === currentAppRoute?.appId &&
+      this.currentActiveRoute?.appPath === currentAppRoute?.appPath) {
+
+      return;
+    }
+
+    // Cleanup previous occupant
+    if (this.currentActiveRoute &&
+      this.currentActiveRoute.appId !== currentAppRoute?.appId) {
+
+      const activeEl = document.querySelector(`[data-content-id="${this.currentActiveRoute.appId}"]`);
+      if (activeEl) {
+        activeEl.removeAttribute('active-route');
+        activeEl.removeAttribute('app-path');
+
+        if ('appPath' in activeEl) activeEl.appPath = '';
+        if ('active' in activeEl) activeEl.active = false;
+
+        activeEl.dispatchEvent(new CustomEvent('app-route-deactivated', {
+          bubbles: true,
+          composed: true
+        }));
+      }
+    }
+
+    if (!currentAppRoute) {
+      this.currentActiveRoute = undefined;
+      return
+    }
+
+    const viewport = document.querySelector(`[data-viewport="${currentAppRoute.viewport}"]`);
+    if (!viewport) return;
+
+    let targetEl = viewport.querySelector(`[data-content-id="${currentAppRoute.appId}"]`);
+
+    if (!targetEl) {
+      let pendingEl = document.querySelector(`template[id="content-${currentAppRoute.appId}"]`) as HTMLTemplateElement;
+
+      // 3. THE FALLBACK: If the requested app is missing, find the 404 template
+      if (!pendingEl) {
+        console.warn(`App Router: ID "${currentAppRoute.appId}" not found. Falling back to 404.`);
+        pendingEl = document.querySelector(`template[id="content-404"]`) as HTMLTemplateElement;
+      }
+
+      if (pendingEl) {
+        viewport.innerHTML = '';
+        const clone = pendingEl.content.cloneNode(true);
+        targetEl = (clone as DocumentFragment).firstElementChild as HTMLElement;
+        viewport.appendChild(clone);
+      }
+    }
+
+    if (targetEl) {
+      targetEl.setAttribute('active-route', '');
+      targetEl.setAttribute('app-path', currentAppRoute.appPath);
+
+      if ('appPath' in targetEl) targetEl.appPath = currentAppRoute.appPath;
+      if ('active' in targetEl) targetEl.active = true;
+
+      targetEl.dispatchEvent(new CustomEvent('app-route-change', {
+        detail: { path: currentAppRoute.appPath },
+        bubbles: true,
+        composed: true
+      }));
+    }
+
+    this.currentActiveRoute = currentAppRoute;
   }
 
   /**
@@ -92,31 +172,6 @@ class AppRouter {
       originalReplace.apply(window.history, args);
       registry._navigateToAppRoutePath();
     };
-  }
-
-  basepath(): string {
-    if (window.location.pathname.includes(appMeta.pathSeparator)) {
-      return window.location.pathname.split(appMeta.pathSeparator, 2)[0];
-    }
-    if (window.location.pathname.endsWith('/')) {
-      return window.location.pathname.slice(0, -1);
-    }
-    return window.location.pathname;
-  }
-
-  currentAppRoute(): { appId: string, appPath: string } | undefined {
-    if (window.location.pathname.includes(appMeta.pathSeparator)) {
-      const routePath = window.location.pathname.split(appMeta.pathSeparator, 2)[1];
-
-      const parts = routePath.split('/');
-      const appId = parts.shift() || '';
-      const appPath = '/' + parts.join('/');
-      return { appId, appPath };
-    }
-  }
-
-  navigate(location: string): void {
-    window.history.pushState({}, '', location);
   }
 }
 
