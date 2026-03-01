@@ -34,8 +34,11 @@ class AppRouter {
     }
   }
 
-  navigate(location: string): void {
-    window.history.pushState({}, '', location);
+  navigate(appRoute: AppRoute): void {
+    if (!appRoute.appPath.startsWith('/')) {
+      appRoute.appPath = '/' + appRoute.appPath;
+    }
+    window.history.pushState({}, '', this.basepath() + appMeta.pathSeparator + appRoute.viewport + '/' + appRoute.appId + appRoute.appPath);
   }
 
   /**
@@ -77,7 +80,7 @@ class AppRouter {
         return
       }
       event.preventDefault();
-      this.navigate(url.pathname);
+      window.history.pushState({}, '', url.pathname);
     }
   }
 
@@ -175,6 +178,8 @@ class AppRouter {
   }
 }
 
+const appRouter = new AppRouter();
+
 // 1. Define what a "Constructor" looks like in TS
 type Constructor<T = {}> = new (...args: any[]) => T;
 
@@ -253,17 +258,21 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
       super.attributeChangedCallback?.(name, old, value);
     }
 
+    navigate(appPath: string, viewport: string = this.parentElement?.getAttribute('data-viewport') || "error"): void {
+      appRouter.navigate({ appId: this.getAttribute('data-content-id') || "error", appPath, viewport });
+    }
+
     // Optional: Declare the hooks so TS knows they might exist
     onRouteActivated?(path: string): void;
     onRouteDeactivated?(): void;
   };
 };
 
-const appRouter = new AppRouter();
 const navigate = appRouter.navigate.bind(appRouter)
 
 export {
   AppBridge,
+  AppRoute,
   AppRouter,
   appRouter,
   navigate,
