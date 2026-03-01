@@ -15,6 +15,7 @@ export default defineConfig({
     },
     sourcemap: true,
     target: 'es2022',
+    emptyOutDir: true,
     rollupOptions: {
       output: {
         format: 'es'
@@ -61,6 +62,7 @@ export default defineConfig({
     dts({
       insertTypesEntry: true,
       include: ['src/**/*.ts'],
+      exclude: ['**/*.test.ts'],
     }),
   ],
   server: {
