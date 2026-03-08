@@ -1,6 +1,6 @@
 import { appMeta } from './app-meta';
 
-type AppRoute = { appId: string, appPath: string, viewport: string };
+type AppRoute = { appId: string, appPath: string, viewport: string, hash?: string };
 
 class AppRouter {
   private currentActiveRoute: AppRoute | undefined;
@@ -23,19 +23,38 @@ class AppRouter {
       if (appMeta.collectiveEndpoints.includes(url.pathname)) {
         return
       }
+
+      // If it's the exact same page but with a different hash, let's just let the browser handle it
+      // or handle it via hashchange to avoid unnecessary re-mounts
+      if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash !== window.location.hash) {
+        // We still prevent default to handle it manually or just let it go for standard hash scrolling
+        // If we want the router to stay in control:
+        event.preventDefault();
+        window.history.pushState({}, '', url.pathname + url.search + url.hash);
+        this.scrollToHash();
+        return;
+      }
+
       event.preventDefault();
-      window.history.pushState({}, '', url.pathname);
+      window.history.pushState({}, '', url.pathname + url.search + url.hash);
     }
   }
 
   _navigateToAppRoutePath(): void {
     const currentAppRoute = this.currentAppRoute();
+    if (!currentAppRoute) {
+      this.currentActiveRoute = undefined;
+      return
+    }
 
-    // Guard: Do nothing if we are already exactly here
-    if (this.currentActiveRoute?.viewport === currentAppRoute?.viewport &&
-      this.currentActiveRoute?.appId === currentAppRoute?.appId &&
-      this.currentActiveRoute?.appPath === currentAppRoute?.appPath) {
+    // Guard: If it's the exact same app and path, we just scroll to the hash and stop.
+    // Re-mounting components for a simple scroll jump is expensive and breaks scroll animations.
+    if (this.currentActiveRoute?.viewport === currentAppRoute.viewport &&
+      this.currentActiveRoute?.appId === currentAppRoute.appId &&
+      this.currentActiveRoute?.appPath === currentAppRoute.appPath) {
 
+      this.currentActiveRoute = currentAppRoute;
+      this.scrollToHash();
       return;
     }
 
@@ -100,6 +119,7 @@ class AppRouter {
     }
 
     this.currentActiveRoute = currentAppRoute;
+    this.scrollToHash();
   }
 
   /**
@@ -121,6 +141,32 @@ class AppRouter {
     };
   }
 
+  public scrollToHash(): void {
+    const hash = window.location.hash;
+    if (!hash) return;
+
+    // We use a small timeout to ensure the DOM has actually updated if requested by a proxy/component
+    setTimeout(() => {
+      const id = hash.substring(1);
+      let element = document.getElementById(id) || document.getElementsByName(id)[0];
+
+      // If not found in light DOM, search inside shadow roots of active components
+      if (!element) {
+        const activeComponents = document.querySelectorAll('[active-route]');
+        for (const comp of activeComponents) {
+          if (comp.shadowRoot) {
+            element = comp.shadowRoot.getElementById(id) || comp.shadowRoot.querySelector(`[name="${id}"]`) as HTMLElement;
+            if (element) break;
+          }
+        }
+      }
+
+      if (element) {
+        element.scrollIntoView();
+      }
+    }, 0);
+  }
+
   basepath(): string {
     if (window.location.pathname.includes(appMeta.pathSeparator)) {
       return window.location.pathname.split(appMeta.pathSeparator, 2)[0];
@@ -139,7 +185,8 @@ class AppRouter {
       const viewport = parts.shift() || 'main';
       const appId = parts.shift() || '';
       const appPath = '/' + parts.join('/');
-      return { appId, appPath, viewport };
+      const hash = window.location.hash;
+      return { appId, appPath, viewport, hash };
     }
   }
 
@@ -147,7 +194,8 @@ class AppRouter {
     if (!appRoute.appPath.startsWith('/')) {
       appRoute.appPath = '/' + appRoute.appPath;
     }
-    window.history.pushState({}, '', this.basepath() + appMeta.pathSeparator + appRoute.viewport + '/' + appRoute.appId + appRoute.appPath);
+    const url = this.basepath() + appMeta.pathSeparator + appRoute.viewport + '/' + appRoute.appId + appRoute.appPath + (appRoute.hash || '');
+    window.history.pushState({}, '', url);
   }
 
   /**
@@ -233,8 +281,17 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
       const old = this._active;
       this._active = !!value;
       if (old !== this._active) {
-        // @ts-ignore - Assuming these exist or are optional on the consumer
-        this._active ? this.onRouteActivated?.(this._appPath) : this.onRouteDeactivated?.();
+        if (this._active) {
+          const result = this.onRouteActivated?.(this._appPath);
+          // @ts-ignore
+          if (result instanceof Promise) {
+            result.then(() => appRouter.scrollToHash());
+          } else {
+            appRouter.scrollToHash();
+          }
+        } else {
+          this.onRouteDeactivated?.();
+        }
         // @ts-ignore - Support for Lit re-renders
         if (typeof (this as any).requestUpdate === 'function') (this as any).requestUpdate('active', old);
       }
@@ -245,8 +302,15 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
       const old = this._appPath;
       this._appPath = value;
       if (old !== this._appPath) {
-        // @ts-ignore
-        if (this.active) this.onRouteActivated?.(this._appPath);
+        if (this.active) {
+          const result = this.onRouteActivated?.(this._appPath);
+          // @ts-ignore
+          if (result instanceof Promise) {
+            result.then(() => appRouter.scrollToHash());
+          } else {
+            appRouter.scrollToHash();
+          }
+        }
         // @ts-ignore
         if (typeof (this as any).requestUpdate === 'function') (this as any).requestUpdate('appPath', old);
       }
@@ -271,8 +335,16 @@ const AppBridge = <T extends Constructor<HTMLElement>>(BaseClass: T) => {
       }
     }
 
-    navigate(appPath: string, viewport: string = this.parentElement?.getAttribute('data-viewport') || "error"): void {
-      appRouter.navigate({ appId: this.getAttribute('data-content-id') || "error", appPath, viewport });
+    scrollToHash(): void {
+      appRouter.scrollToHash();
+    }
+
+    navigate(pathOrHash: string, hash: string = '', viewport: string = this.parentElement?.getAttribute('data-viewport') || "error"): void {
+      if (pathOrHash.startsWith('#')) {
+        window.history.pushState({}, '', window.location.pathname + window.location.search + pathOrHash);
+        return;
+      }
+      appRouter.navigate({ appId: this.getAttribute('data-content-id') || "error", appPath: pathOrHash, viewport, hash });
     }
 
     static get observedAttributes() {
