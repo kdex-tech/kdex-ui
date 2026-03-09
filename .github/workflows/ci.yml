@@ -37,7 +37,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: 20
+        node-version: 24
         cache: 'npm'
 
     - name: Install dependencies
@@ -45,6 +45,3 @@ jobs:
 
     - name: Run Unit Tests
       run: npm test
-    # - name: Publish NPM Package
-    #   if: ${{ env.PUBLISH == 'true' }}
-    #   uses: ./.github/actions/publish-npm-package
